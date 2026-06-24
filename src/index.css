@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #F9F8FF;
+  color: #18181b;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+#root,
+.app-shell,
+.app-main {
+  min-height: 100vh;
+}
+
+@keyframes chama {
+  0%, 100% {
+    transform: translateY(0) scaleX(1);
+    filter: drop-shadow(0 0 14px rgba(124, 58, 237, 0.35));
+  }
+  20% {
+    transform: translateY(-8px) scaleX(0.96);
+    filter: drop-shadow(0 0 22px rgba(124, 58, 237, 0.55));
+  }
+  45% {
+    transform: translateY(-14px) scaleX(1.03);
+    filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.45));
+  }
+  70% {
+    transform: translateY(-6px) scaleX(0.98);
+    filter: drop-shadow(0 0 18px rgba(124, 58, 237, 0.5));
+  }
+}
+
+.animate-chama {
+  animation: chama 3.2s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Smoky gradient dividers between sections */
+.smoky-bottom-eeedf2::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, #EEEDF2);
+  pointer-events: none;
+}
+
+.smoky-bottom-white::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, #F9F8FF);
+  pointer-events: none;
+}
