@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../Sistema/Button';
 import globoVideo from '../../assets/videos/202606162205.mp4';
 
 const BG = '#E4E0EE';
 
 export const FooterCTASection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative overflow-hidden pb-20 pt-0" style={{ background: BG }}>
 
@@ -40,7 +43,7 @@ export const FooterCTASection = () => {
           onde você não precisa fingir
         </h2>
         <div className="shrink-0">
-          <Button variant="primary" size="hero">Criar conta</Button>
+          <Button variant="primary" size="hero" onClick={() => navigate('/cadastro')}>Criar conta</Button>
         </div>
       </div>
 

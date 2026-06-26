@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -19,6 +20,63 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ══ Dark mode global overrides ══════════════════ */
+html.dark body {
+  background-color: #0d0d18;
+  color: #e8e6ff;
+}
+
+/* Superfícies brancas → dark surface */
+html.dark [class~="bg-white"] {
+  background-color: #13131f !important;
+}
+html.dark [class~="bg-white\/90"] {
+  background-color: rgba(19,19,31,0.9) !important;
+}
+html.dark [class~="bg-white\/95"] {
+  background-color: rgba(19,19,31,0.95) !important;
+}
+
+/* Fundos claros */
+html.dark [class~="bg-[#F9F8FF]"] {
+  background-color: #1c1c2e !important;
+}
+html.dark [class~="bg-[#EDE8F5]"] {
+  background-color: #2d1f4e !important;
+}
+html.dark [class~="bg-[#F5F3FF]"] {
+  background-color: #1e1829 !important;
+}
+
+/* Bordas */
+html.dark [class~="border-[#E5E0EB]"] {
+  border-color: #2a2a3d !important;
+}
+html.dark [class~="border-[#F5F3FF]"] {
+  border-color: #2a2a3d !important;
+}
+
+/* Cores de texto */
+html.dark [class~="text-[#0f0f14]"] {
+  color: #e8e6ff !important;
+}
+html.dark [class~="text-[#6B7280]"] {
+  color: #9CA3AF !important;
+}
+
+/* Placeholders */
+html.dark [class~="placeholder:text-[#9CA3AF]"]::placeholder {
+  color: #6B7280 !important;
+}
+
+/* Transição suave em todos os elementos */
+html.dark *,
+html.dark *::before,
+html.dark *::after {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 button,

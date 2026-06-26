@@ -1,7 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../Sistema/Button';
 import heroMockup from '../../assets/imagens/heroi/mao.png';
 
 export const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section
       className="relative min-h-screen overflow-hidden bg-linear-to-b from-purple-100 via-purple-50 to-[#F9F8FF] px-6 pt-32"
@@ -21,8 +24,8 @@ export const Hero = () => {
         </p>
 
         <div className="mt-10.5 flex flex-wrap items-center justify-center gap-5">
-          <Button variant="primary" size="hero">Criar conta</Button>
-          <Button variant="secondarySoft" size="hero">Explorar Plataforma</Button>
+          <Button variant="primary" size="hero" onClick={() => navigate('/cadastro')}>Criar conta</Button>
+          <Button variant="secondarySoft" size="hero" onClick={() => navigate('/cadastro')}>Explorar Plataforma</Button>
         </div>
       </div>
 
