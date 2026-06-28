@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { ConfirmProvider } from './contexts/ConfirmContext';
 import { BaseLayout } from './components/layouts';
 import { Home } from './pages/Home';
 import { CadastroPage } from './pages/Cadastro';
@@ -50,7 +52,11 @@ export const App = () => (
     <AuthProvider>
       <ThemeProvider>
         <NotificationsProvider>
-          <AppRoutes />
+          <ToastProvider>
+            <ConfirmProvider>
+              <AppRoutes />
+            </ConfirmProvider>
+          </ToastProvider>
         </NotificationsProvider>
       </ThemeProvider>
     </AuthProvider>

@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { Calendar, Users, MapPin, Monitor, ArrowLeft, Send, Heart, MessageCircle, ChevronRight } from 'lucide-react';
+import { Calendar, Users, MapPin, Monitor, ArrowLeft, Send, Heart, ChevronRight } from 'lucide-react';
 import { AppShell, Avatar } from '../../components/AppShell';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationsContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 type EventFormat = 'ONLINE' | 'IN_PERSON' | 'HYBRID';
 
@@ -51,6 +53,8 @@ const FORMAT_ICON: Record<EventFormat, React.ElementType> = {
 const FORMAT_LABEL: Record<EventFormat, string> = {
   ONLINE: 'Online', IN_PERSON: 'Presencial', HYBRID: 'Híbrido',
 };
+
+const simulateApi = (ms = 600) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 /* ── Feed do evento ──────────────────────────── */
 interface EventPost { id: string; authorName: string; authorAvatar: string | null; text: string; createdAt: string; likes: number; liked: boolean; }
@@ -193,12 +197,45 @@ function EventChat({ event }: { event: MockEvent }) {
 
 /* ── Página principal ─────────────────────── */
 export function EventosPage() {
+  const { add: addNotif } = useNotifications();
+  const { confirm } = useConfirm();
+
   const [selected, setSelected] = useState<MockEvent | null>(null);
   const [tab, setTab] = useState<'feed' | 'chat'>('feed');
   const [attending, setAttending] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<EventFormat | ''>('');
 
   const shown = filter ? MOCK_EVENTS.filter(e => e.format === filter) : MOCK_EVENTS;
+
+  const handleAttend = (event: MockEvent) => {
+    setAttending(prev => new Set([...prev, event.id]));
+    simulateApi(400).then(() => {
+      addNotif(`Você confirmou presença no evento "${event.title}".`, 'event');
+    });
+  };
+
+  const handleUnattend = (event: MockEvent) => {
+    confirm({
+      title: 'Cancelar inscrição',
+      message: `Tem certeza que quer cancelar sua participação em "${event.title}"?`,
+      confirmLabel: 'Cancelar inscrição',
+      cancelLabel: 'Voltar',
+      variant: 'danger',
+      onConfirm: async () => {
+        await simulateApi(600);
+        setAttending(prev => { const n = new Set(prev); n.delete(event.id); return n; });
+        addNotif(`Você cancelou sua participação no evento "${event.title}".`, 'event');
+      },
+    });
+  };
+
+  const handleToggle = (event: MockEvent) => {
+    if (attending.has(event.id)) {
+      handleUnattend(event);
+    } else {
+      handleAttend(event);
+    }
+  };
 
   if (selected) {
     const FormatIcon = FORMAT_ICON[selected.format];
@@ -225,8 +262,8 @@ export function EventosPage() {
                 <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-[#7C3AED]" />{selected.attendees + (attending.has(selected.id) ? 1 : 0)} confirmados</span>
               </div>
               <button
-                onClick={() => setAttending(prev => { const n = new Set(prev); n.has(selected.id) ? n.delete(selected.id) : n.add(selected.id); return n; })}
-                className={`mt-4 rounded-full px-6 py-2 text-[13px] font-light transition ${attending.has(selected.id) ? 'bg-[#EDE8F5] text-[#7C3AED]' : 'bg-[#7C3AED] text-white hover:bg-[#6D28D9]'}`}
+                onClick={() => handleToggle(selected)}
+                className={`mt-4 rounded-full px-6 py-2 text-[13px] font-light transition ${attending.has(selected.id) ? 'bg-[#EDE8F5] text-[#7C3AED] hover:bg-red-50 hover:text-red-500' : 'bg-[#7C3AED] text-white hover:bg-[#6D28D9]'}`}
               >
                 {attending.has(selected.id) ? '✓ Participando' : 'Participar'}
               </button>
@@ -267,6 +304,7 @@ export function EventosPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {shown.map(event => {
             const FormatIcon = FORMAT_ICON[event.format];
+            const isAttending = attending.has(event.id);
             return (
               <div key={event.id} className="flex flex-col overflow-hidden rounded-2xl border border-[#E5E0EB] bg-white transition hover:shadow-sm">
                 <div className="h-32 w-full" style={{ background: event.gradient }} />
@@ -276,14 +314,14 @@ export function EventosPage() {
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] text-[#9CA3AF]">
                     <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} · {event.time}</span>
                     <span className="flex items-center gap-1"><FormatIcon className="h-3.5 w-3.5" />{FORMAT_LABEL[event.format]}</span>
-                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{event.attendees + (attending.has(event.id) ? 1 : 0)} confirmados</span>
+                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{event.attendees + (isAttending ? 1 : 0)} confirmados</span>
                   </div>
                   <div className="mt-4 flex gap-2">
                     <button
-                      onClick={() => setAttending(prev => { const n = new Set(prev); n.has(event.id) ? n.delete(event.id) : n.add(event.id); return n; })}
-                      className={`flex-1 rounded-full py-2 text-[13px] font-light transition ${attending.has(event.id) ? 'bg-[#EDE8F5] text-[#7C3AED]' : 'bg-[#EDE8F5] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white'}`}
+                      onClick={() => handleToggle(event)}
+                      className={`flex-1 rounded-full py-2 text-[13px] font-light transition ${isAttending ? 'bg-[#EDE8F5] text-[#7C3AED] hover:bg-red-50 hover:text-red-500' : 'bg-[#EDE8F5] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white'}`}
                     >
-                      {attending.has(event.id) ? '✓ Participando' : 'Participar'}
+                      {isAttending ? '✓ Participando' : 'Participar'}
                     </button>
                     <button onClick={() => setSelected(event)} className="flex items-center gap-1 rounded-full border border-[#E5E0EB] px-3 py-2 text-[13px] font-light text-[#6B7280] transition hover:border-[#7C3AED] hover:text-[#7C3AED]">
                       Abrir <ChevronRight className="h-3.5 w-3.5" />

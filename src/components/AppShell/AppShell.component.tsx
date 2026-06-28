@@ -1,9 +1,9 @@
-import { type ReactNode, useState, useRef, useEffect } from 'react';
+import { type ReactNode, useState, useRef, useEffect, useCallback } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   Home, Users, Compass, MessageCircle, Bookmark,
   Briefcase, GraduationCap, Calendar, Search, Bell, LogOut,
-  X, Heart, UserPlus, Building2, Zap,
+  X, Heart, UserPlus, Building2, Zap, CheckCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications, type AppNotification } from '../../contexts/NotificationsContext';
@@ -29,7 +29,7 @@ const NOTIF_ICON: Record<AppNotification['type'], React.ElementType> = {
 
 function Avatar({ src, name, size = 'md' }: { src?: string | null; name: string; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   const sizeClass = size === 'sm' ? 'h-8 w-8 text-xs' : size === 'lg' ? 'h-10 w-10 text-sm' : size === 'xl' ? 'h-16 w-16 text-xl' : 'h-9 w-9 text-xs';
-  const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const initials = name.split(' ').filter(w => !(w.length <= 2 && w === w.toLowerCase())).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   if (src) return <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} />;
   return (
     <div
@@ -91,8 +91,13 @@ function NotifDropdown({ onClose }: { onClose: () => void }) {
         <span className="text-[14px] font-light text-[#0f0f14] dark:text-[#e8e6ff]">Notificações</span>
         <div className="flex items-center gap-2">
           {unread > 0 && tab === 'novas' && (
-            <button onClick={markAllRead} className="text-[11px] text-[#7C3AED] hover:underline">
-              Marcar tudo como lido
+            <button
+              onClick={markAllRead}
+              aria-label="Marcar tudo como lido"
+              className="flex items-center gap-1 rounded-full border border-[#C4B5FD] px-2 py-0.5 text-[10px] font-light text-[#7C3AED] transition hover:bg-[#EDE8F5]"
+            >
+              <CheckCheck className="h-3 w-3" />
+              Lidas
             </button>
           )}
           <button onClick={onClose} className="rounded-full p-1 text-[#9CA3AF] hover:text-[#6B7280]">
@@ -184,6 +189,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const handleToastClose = useCallback(() => setToast(null), []);
+
   const handleLogout = async () => {
     await logout();
     navigate('/');
@@ -192,7 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#F9F8FF] dark:bg-[#0d0d18]">
       {/* Push toast */}
-      {toast && <PushToast notif={toast} onClose={() => setToast(null)} />}
+      {toast && <PushToast notif={toast} onClose={handleToastClose} />}
 
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-[#E5E0EB] bg-white/90 backdrop-blur-md dark:border-[#2a2a3d] dark:bg-[#13131f]/90">
@@ -217,6 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-1">
             <div ref={bellRef} className="relative">
               <button
+                aria-label="Notificações"
                 onClick={() => setBellOpen(p => !p)}
                 className="relative grid h-9 w-9 place-items-center rounded-full text-[#6B7280] transition hover:bg-[#EDE8F5] hover:text-[#7C3AED] dark:hover:bg-[#2d1f4e] dark:text-[#9CA3AF]"
               >

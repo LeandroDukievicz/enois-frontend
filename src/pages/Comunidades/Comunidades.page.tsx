@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Users } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 
 type Category = 'Todas' | 'Tecnologia' | 'Engenharia' | 'Design' | 'Produto' | 'Liderança' | 'Carreira' | 'Freelance';
 
@@ -88,8 +89,12 @@ const MOCK_COMMUNITIES: Community[] = [
   },
 ];
 
+const simulateApi = (ms = 600) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
 export function ComunidadesPage() {
   const { add: addNotif } = useNotifications();
+  const { confirm } = useConfirm();
+
   const [activeCategory, setActiveCategory] = useState<Category>('Tecnologia');
   const [communities, setCommunities] = useState(MOCK_COMMUNITIES);
 
@@ -97,12 +102,38 @@ export function ComunidadesPage() {
     ? communities
     : communities.filter(c => c.category === activeCategory);
 
+  const handleJoin = (community: Community) => {
+    setCommunities(prev =>
+      prev.map(c => c.id === community.id ? { ...c, joined: true, members: c.members + 1 } : c),
+    );
+    simulateApi(400).then(() => {
+      addNotif(`Você entrou na comunidade "${community.name}".`, 'community');
+    });
+  };
+
+  const handleLeave = (community: Community) => {
+    confirm({
+      title: 'Sair da comunidade',
+      message: `Tem certeza que quer cancelar a subscrição de "${community.name}"?`,
+      confirmLabel: 'Sair',
+      variant: 'danger',
+      onConfirm: async () => {
+        await simulateApi(600);
+        setCommunities(prev =>
+          prev.map(c => c.id === community.id ? { ...c, joined: false, members: c.members - 1 } : c),
+        );
+        addNotif(`Você saiu da comunidade "${community.name}".`, 'community');
+      },
+    });
+  };
+
   const handleToggle = (id: string) => {
     const community = communities.find(c => c.id === id);
     if (!community) return;
-    setCommunities(prev => prev.map(c => c.id === id ? { ...c, joined: !c.joined } : c));
-    if (!community.joined) {
-      addNotif(`Você entrou na comunidade "${community.name}".`, 'community');
+    if (community.joined) {
+      handleLeave(community);
+    } else {
+      handleJoin(community);
     }
   };
 
