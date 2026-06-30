@@ -49,32 +49,53 @@ function PrefRow({ icon: Icon, label, description, checked, onChange }: {
 
 /* ── EditModal ───────────────────────────────────── */
 function EditModal({ onClose }: { onClose: () => void }) {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { isDark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState<EditTab>('Informações');
+
+  /* Campos do AuthUser — lidos do contexto */
   const [name, setName] = useState(user?.name ?? '');
   const [username, setUsername] = useState(user?.username ?? '');
   const [headline, setHeadline] = useState(user?.headline ?? '');
-  const [bio, setBio] = useState('');
-  const [empresa, setEmpresa] = useState('');
-  const [localizacao, setLocalizacao] = useState('');
-  const [disponibilidade, setDisponibilidade] = useState('');
-  const [portfolio, setPortfolio] = useState('');
-  const [links, setLinks] = useState('');
-  const [habilidades, setHabilidades] = useState('');
-  const [objetivos, setObjetivos] = useState('');
-  const [aberto, setAberto] = useState(false);
-  const [mentor, setMentor] = useState(false);
 
-  /* Preferências persistidas em localStorage */
+  /* Campos extras — persistidos em localStorage */
+  const [bio, setBio] = useState(() => localStorage.getItem('profile_bio') ?? '');
+  const [empresa, setEmpresa] = useState(() => localStorage.getItem('profile_empresa') ?? '');
+  const [localizacao, setLocalizacao] = useState(() => localStorage.getItem('profile_localizacao') ?? '');
+  const [disponibilidade, setDisponibilidade] = useState(() => localStorage.getItem('profile_disponibilidade') ?? '');
+  const [portfolio, setPortfolio] = useState(() => localStorage.getItem('profile_portfolio') ?? '');
+  const [links, setLinks] = useState(() => localStorage.getItem('profile_links') ?? '');
+  const [habilidades, setHabilidades] = useState(() => localStorage.getItem('profile_habilidades') ?? '');
+  const [objetivos, setObjetivos] = useState(() => localStorage.getItem('profile_objetivos') ?? '');
+  const [aberto, setAberto] = useState(() => localStorage.getItem('profile_aberto') === 'true');
+  const [mentor, setMentor] = useState(() => localStorage.getItem('profile_mentor') === 'true');
+
+  /* Preferências de notificação */
   const [emailNotif, setEmailNotif] = useState(() => localStorage.getItem('pref_email') === 'true');
   const [pushNotif, setPushNotif] = useState(() => localStorage.getItem('pref_push') !== 'false');
   const [connectionNotif, setConnectionNotif] = useState(() => localStorage.getItem('pref_connection') !== 'false');
 
   const handleSave = () => {
+    /* Persiste dados do perfil no AuthContext (grava em current_user no localStorage) */
+    updateUser({ name: name.trim() || user?.name, username: username.trim() || user?.username, headline: headline.trim() || user?.headline });
+
+    /* Persiste campos extras */
+    localStorage.setItem('profile_bio', bio);
+    localStorage.setItem('profile_empresa', empresa);
+    localStorage.setItem('profile_localizacao', localizacao);
+    localStorage.setItem('profile_disponibilidade', disponibilidade);
+    localStorage.setItem('profile_portfolio', portfolio);
+    localStorage.setItem('profile_links', links);
+    localStorage.setItem('profile_habilidades', habilidades);
+    localStorage.setItem('profile_objetivos', objetivos);
+    localStorage.setItem('profile_aberto', String(aberto));
+    localStorage.setItem('profile_mentor', String(mentor));
+
+    /* Persiste preferências */
     localStorage.setItem('pref_email', String(emailNotif));
     localStorage.setItem('pref_push', String(pushNotif));
     localStorage.setItem('pref_connection', String(connectionNotif));
+
     onClose();
   };
 
@@ -230,6 +251,17 @@ export function PerfilPage() {
   const [coverUrl, setCoverUrl] = useState<string | null>(
     () => localStorage.getItem('cover_image')
   );
+  /* Relê campos extras do localStorage sempre que o modal fecha */
+  const [disponibilidade, setDisponibilidade] = useState(() => localStorage.getItem('profile_disponibilidade') ?? '');
+  const [bio, setBio] = useState(() => localStorage.getItem('profile_bio') ?? '');
+  const [habilidades, setHabilidades] = useState(() => localStorage.getItem('profile_habilidades') ?? '');
+
+  const handleEditClose = () => {
+    setEditOpen(false);
+    setDisponibilidade(localStorage.getItem('profile_disponibilidade') ?? '');
+    setBio(localStorage.getItem('profile_bio') ?? '');
+    setHabilidades(localStorage.getItem('profile_habilidades') ?? '');
+  };
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -258,7 +290,7 @@ export function PerfilPage() {
 
   return (
     <AppShell>
-      {editOpen && <EditModal onClose={() => setEditOpen(false)} />}
+      {editOpen && <EditModal onClose={handleEditClose} />}
 
       <div className="space-y-4">
         {/* Card principal */}
@@ -314,6 +346,14 @@ export function PerfilPage() {
             <p className="text-[14px] font-light text-[#7C3AED]">
               {user?.headline ? user.headline : 'Profissional · Conexão'}
             </p>
+            {bio && <p className="mt-2 text-[13px] font-light text-[#6B7280]">{bio}</p>}
+            {habilidades && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {habilidades.split(',').map(h => h.trim()).filter(Boolean).map(h => (
+                  <span key={h} className="rounded-full bg-[#EDE8F5] px-2.5 py-0.5 text-[11px] text-[#7C3AED]">{h}</span>
+                ))}
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <span className="text-[13px] text-[#6B7280]">· 0 conexões</span>
             </div>
@@ -336,7 +376,9 @@ export function PerfilPage() {
               <Clock className="h-4 w-4 text-[#7C3AED]" />
               <h2 className="text-[15px] font-light text-[#0f0f14]">Disponibilidade</h2>
             </div>
-            <p className="mt-2 text-[13px] font-light text-[#9CA3AF]">Não informada</p>
+            <p className="mt-2 text-[13px] font-light text-[#9CA3AF]">
+              {disponibilidade || 'Não informada'}
+            </p>
             <button onClick={() => setEditOpen(true)} className="mt-3 text-[12px] font-light text-[#7C3AED] transition hover:underline">
               Atualizar →
             </button>
