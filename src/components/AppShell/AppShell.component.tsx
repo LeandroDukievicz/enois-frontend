@@ -94,10 +94,10 @@ function NotifDropdown({ onClose }: { onClose: () => void }) {
             <button
               onClick={markAllRead}
               aria-label="Marcar tudo como lido"
-              className="flex items-center gap-1 rounded-full border border-[#C4B5FD] px-2 py-0.5 text-[10px] font-light text-[#7C3AED] transition hover:bg-[#EDE8F5]"
+              className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-light text-[#9CA3AF] transition hover:text-[#7C3AED]"
             >
               <CheckCheck className="h-3 w-3" />
-              Lidas
+              Ler tudo
             </button>
           )}
           <button onClick={onClose} className="rounded-full p-1 text-[#9CA3AF] hover:text-[#6B7280]">
@@ -244,7 +244,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="hidden items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-light text-[#6B7280] transition hover:bg-[#EDE8F5] hover:text-[#7C3AED] dark:text-[#9CA3AF] dark:hover:bg-[#2d1f4e] md:flex"
               >
                 <Avatar src={user.avatar} name={user.name} size="sm" />
-                <span>Perfil</span>
+                <span>{user?.username ?? 'Perfil'}</span>
               </Link>
             )}
           </div>

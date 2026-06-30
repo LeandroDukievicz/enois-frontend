@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { Calendar, Users, MapPin, Monitor, ArrowLeft, Send, Heart, ChevronRight } from 'lucide-react';
+import { Calendar, Users, MapPin, Monitor, ArrowLeft, Send, Heart, MessageCircle, Trash2, Bold, Italic, ChevronRight } from 'lucide-react';
 import { AppShell, Avatar } from '../../components/AppShell';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
@@ -129,14 +129,35 @@ function EventFeed({ eventId }: { eventId: string }) {
 
 /* ── Chat do grupo do evento ───────────────── */
 interface ChatMessage { id: string; from: string; avatar: string | null; text: string; createdAt: Date; mine: boolean; }
+interface ChatComment { id: string; from: string; avatar: string | null; text: string; }
+
+const REPLY_EMOJIS = ['👋','🚀','💡','🎯','💪','🔥','✅','⚡','🌟','🤝','💻','📊','🎉','🙌','👀','💬'];
+
+function ChatCommentContent({ html }: { html: string }) {
+  if (/<[a-zA-Z][\s\S]*>/i.test(html)) {
+    return (
+      <div
+        className="mt-0.5 text-[11px] font-light text-[#0f0f14] dark:text-[#e8e6ff] [&_h1]:text-[13px] [&_h1]:font-semibold [&_h2]:text-[12px] [&_h2]:font-semibold [&_b]:font-semibold [&_strong]:font-semibold [&_em]:italic [&_i]:italic"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+  return <p className="mt-0.5 text-[11px] font-light text-[#0f0f14] dark:text-[#e8e6ff]">{html}</p>;
+}
 
 function EventChat({ event }: { event: MockEvent }) {
   const { user } = useAuth();
+  const { confirm } = useConfirm();
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 's1', from: event.host, avatar: null, text: `Olá! Bem-vindos ao chat oficial do evento "${event.title}". Fiquem à vontade para interagir.`, createdAt: new Date(Date.now() - 7200000), mine: false },
     { id: 's2', from: 'Moderação', avatar: null, text: 'Lembrem-se de manter o respeito e a cordialidade em todas as mensagens. 🙌', createdAt: new Date(Date.now() - 3600000), mine: false },
   ]);
   const [input, setInput] = useState('');
+  const [comments, setComments]         = useState<Record<string, ChatComment[]>>({});
+  const [openThreads, setOpenThreads]   = useState<Set<string>>(new Set());
+  const [replyHasContent, setReplyHasContent] = useState<Record<string, boolean>>({});
+  const [showEmojiFor, setShowEmojiFor] = useState<string | null>(null);
+  const replyEditorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,10 +166,10 @@ function EventChat({ event }: { event: MockEvent }) {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    setMessages(prev => [{
+    setMessages(prev => [...prev, {
       id: String(Date.now()), from: user?.name ?? 'Você', avatar: user?.avatar ?? null,
       text: input.trim(), createdAt: new Date(), mine: true,
-    }, ...prev.reverse()].reverse());
+    }]);
     setInput('');
   };
 
@@ -158,37 +179,208 @@ function EventChat({ event }: { event: MockEvent }) {
     const h = Math.floor(m / 60); return h < 24 ? `${h}h` : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
 
+  const toggleThread = (msgId: string) => {
+    setOpenThreads(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId); else next.add(msgId);
+      return next;
+    });
+    setShowEmojiFor(null);
+  };
+
+  const applyReplyFormat = (msgId: string, command: string, value?: string) => {
+    replyEditorRefs.current[msgId]?.focus();
+    document.execCommand(command, false, value ?? undefined);
+  };
+
+  const insertReplyEmoji = (msgId: string, emoji: string) => {
+    replyEditorRefs.current[msgId]?.focus();
+    document.execCommand('insertText', false, emoji);
+    setShowEmojiFor(null);
+    const text = (replyEditorRefs.current[msgId]?.innerText ?? '').trim();
+    setReplyHasContent(prev => ({ ...prev, [msgId]: text.length > 0 }));
+  };
+
+  const handleReplyInput = (msgId: string) => {
+    const text = (replyEditorRefs.current[msgId]?.innerText ?? replyEditorRefs.current[msgId]?.textContent ?? '').trim();
+    setReplyHasContent(prev => ({ ...prev, [msgId]: text.length > 0 }));
+  };
+
+  const submitReply = (e: FormEvent, msgId: string) => {
+    e.preventDefault();
+    const editor = replyEditorRefs.current[msgId];
+    const html = editor?.innerHTML ?? '';
+    const text = (editor?.innerText ?? editor?.textContent ?? '').trim();
+    if (!text) return;
+    setComments(prev => ({
+      ...prev,
+      [msgId]: [...(prev[msgId] ?? []), {
+        id: String(Date.now()), from: user?.name ?? 'Você',
+        avatar: user?.avatar ?? null, text: html,
+      }],
+    }));
+    if (editor) editor.innerHTML = '';
+    setReplyHasContent(prev => ({ ...prev, [msgId]: false }));
+  };
+
+  const deleteComment = (msgId: string, commentId: string) => {
+    confirm({
+      title: 'Apagar comentário',
+      message: 'Tem certeza que deseja apagar esse comentário?',
+      confirmLabel: 'Apagar',
+      cancelLabel: 'Cancelar',
+      variant: 'danger',
+      onConfirm: async () => {
+        setComments(prev => ({
+          ...prev,
+          [msgId]: (prev[msgId] ?? []).filter(c => c.id !== commentId),
+        }));
+      },
+    });
+  };
+
+  const fmtBtn = 'grid h-5 place-items-center rounded px-1 text-[9px] text-[#9CA3AF] transition hover:bg-[#F5F3FF] hover:text-[#6B7280] dark:hover:bg-[#2a2a3d]';
+
   return (
-    <div className="flex h-130 flex-col rounded-2xl border border-[#E5E0EB] bg-white overflow-hidden">
-      <div className="border-b border-[#E5E0EB] px-4 py-3">
-        <p className="text-[14px] font-light text-[#0f0f14]">Chat do grupo</p>
-        <p className="text-[12px] text-[#9CA3AF]">{event.attendees} participantes</p>
+    <div className="flex h-130 flex-col overflow-hidden rounded-2xl border border-[#E5E0EB] bg-white dark:border-[#2a2a3d] dark:bg-[#13131f]">
+      <div className="border-b border-[#E5E0EB] px-4 py-2.5 dark:border-[#2a2a3d]">
+        <p className="text-[13px] font-light text-[#0f0f14] dark:text-[#e8e6ff]">Chat do grupo</p>
+        <p className="text-[11px] text-[#9CA3AF]">{event.attendees} participantes</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3 p-4">
-        {messages.map(m => (
-          <div key={m.id} className={`flex items-end gap-2 ${m.mine ? 'flex-row-reverse' : ''}`}>
-            {!m.mine && <Avatar src={m.avatar} name={m.from} size="sm" />}
-            <div className={`max-w-[75%] ${m.mine ? '' : ''}`}>
-              {!m.mine && <p className="mb-0.5 text-[11px] text-[#9CA3AF]">{m.from}</p>}
-              <div className={`rounded-2xl px-3 py-2 ${m.mine ? 'rounded-br-none bg-[#7C3AED] text-white' : 'rounded-bl-none bg-[#F5F3FF] text-[#0f0f14]'}`}>
-                <p className="text-[13px] font-light leading-relaxed">{m.text}</p>
+      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+        {messages.map(m => {
+          const thread = comments[m.id] ?? [];
+          const isOpen = openThreads.has(m.id);
+          return (
+            <div key={m.id}>
+              {/* Balão da mensagem */}
+              <div className={`flex items-end gap-1.5 ${m.mine ? 'flex-row-reverse' : ''}`}>
+                {!m.mine && <Avatar src={m.avatar} name={m.from} size="sm" />}
+                <div className="min-w-0 max-w-[80%]">
+                  {!m.mine && <p className="mb-0.5 text-[10px] text-[#9CA3AF]">{m.from}</p>}
+                  <div className={`rounded-2xl px-3 py-2 ${m.mine ? 'rounded-br-none bg-[#7C3AED] text-white' : 'rounded-bl-none bg-[#F5F3FF] text-[#0f0f14] dark:bg-[#1e1e2e] dark:text-[#e8e6ff]'}`}>
+                    <p className="text-[12px] font-light leading-relaxed">{m.text}</p>
+                  </div>
+                  <div className={`mt-0.5 flex items-center gap-2 ${m.mine ? 'justify-end' : ''}`}>
+                    <p className="text-[10px] text-[#9CA3AF]">{timeLabel(m.createdAt)}</p>
+                    <button
+                      onClick={() => toggleThread(m.id)}
+                      className={`flex items-center gap-0.5 text-[10px] transition ${isOpen ? 'text-[#7C3AED]' : 'text-[#9CA3AF] hover:text-[#7C3AED]'}`}
+                    >
+                      <MessageCircle className="h-2.5 w-2.5" />
+                      {thread.length > 0 ? thread.length : 'Responder'}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p className={`mt-0.5 text-[10px] text-[#9CA3AF] ${m.mine ? 'text-right' : ''}`}>{timeLabel(m.createdAt)}</p>
+
+              {/* Thread de comentários */}
+              {isOpen && (
+                <div className={`mt-2 space-y-2 border-l-2 border-[#E5E0EB] pl-2.5 dark:border-[#2a2a3d] ${m.mine ? 'ml-auto mr-5 sm:mr-8' : 'ml-5 sm:ml-8'}`}>
+                  {thread.length === 0 && (
+                    <p className="text-[10px] font-light text-[#9CA3AF]">Nenhum comentário ainda. Seja o primeiro!</p>
+                  )}
+                  {thread.map(c => (
+                    <div key={c.id} className="flex items-start gap-1.5">
+                      <Avatar src={c.avatar} name={c.from} size="sm" />
+                      <div className="min-w-0 flex-1 rounded-xl bg-[#F9F8FF] px-2.5 py-1.5 dark:bg-[#1e1e2e]">
+                        <p className="text-[10px] font-medium text-[#0f0f14] dark:text-[#e8e6ff]">{c.from}</p>
+                        <ChatCommentContent html={c.text} />
+                      </div>
+                      {c.from === (user?.name ?? 'Você') && (
+                        <button
+                          onClick={() => deleteComment(m.id, c.id)}
+                          className="mt-0.5 shrink-0 rounded-lg p-1 text-[#9CA3AF] transition hover:bg-red-50 hover:text-red-400 dark:hover:bg-red-950/30"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Mini-composer de reply */}
+                  <form onSubmit={e => submitReply(e, m.id)}>
+                    <div className="flex items-start gap-1.5">
+                      <Avatar src={user?.avatar ?? null} name={user?.name ?? 'Você'} size="sm" />
+                      <div className="flex-1 rounded-xl border border-[#E5E0EB] bg-[#F9F8FF] px-2.5 py-2 dark:border-[#2a2a3d] dark:bg-[#1e1e2e]">
+                        {/* Toolbar compacta */}
+                        <div className="mb-1.5 flex flex-wrap items-center gap-0.5 border-b border-[#F5F3FF] pb-1.5 dark:border-[#2a2a3d]">
+                          <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyReplyFormat(m.id, 'formatBlock', 'h1')} className={`${fmtBtn} min-w-[18px] font-bold`}>H1</button>
+                          <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyReplyFormat(m.id, 'formatBlock', 'h2')} className={`${fmtBtn} min-w-[18px] font-bold`}>H2</button>
+                          <div className="mx-0.5 h-3 w-px bg-[#E5E0EB] dark:bg-[#2a2a3d]" />
+                          <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyReplyFormat(m.id, 'bold')}   className={fmtBtn}><Bold   className="h-2.5 w-2.5" /></button>
+                          <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => applyReplyFormat(m.id, 'italic')} className={fmtBtn}><Italic className="h-2.5 w-2.5" /></button>
+                          <div className="mx-0.5 h-3 w-px bg-[#E5E0EB] dark:bg-[#2a2a3d]" />
+                          <div
+                            className="relative"
+                            onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setShowEmojiFor(null); }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setShowEmojiFor(showEmojiFor === m.id ? null : m.id)}
+                              className="grid h-5 w-5 place-items-center rounded text-[11px] transition hover:bg-[#F5F3FF] dark:hover:bg-[#2a2a3d]"
+                            >😊</button>
+                            {showEmojiFor === m.id && (
+                              <div className="absolute left-0 top-full z-10 mt-1 w-32 rounded-xl border border-[#E5E0EB] bg-white p-1.5 shadow-xl dark:border-[#2a2a3d] dark:bg-[#13131f]">
+                                <div className="grid grid-cols-4 gap-0.5">
+                                  {REPLY_EMOJIS.map(em => (
+                                    <button key={em} type="button" onMouseDown={e => e.preventDefault()} onClick={() => insertReplyEmoji(m.id, em)}
+                                      className="grid h-6 w-6 place-items-center rounded text-[12px] transition hover:bg-[#F5F3FF] dark:hover:bg-[#1e1e2e]">
+                                      {em}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Editor contenteditable */}
+                        <div className="relative min-h-[28px]">
+                          {!replyHasContent[m.id] && (
+                            <span className="pointer-events-none absolute inset-0 text-[11px] font-light text-[#9CA3AF]" aria-hidden="true">
+                              Escreva um comentário...
+                            </span>
+                          )}
+                          <div
+                            ref={el => { replyEditorRefs.current[m.id] = el; }}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={() => handleReplyInput(m.id)}
+                            onKeyDown={e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitReply(e as unknown as FormEvent, m.id); }}
+                            className="min-h-[28px] w-full outline-none text-[11px] font-light leading-relaxed text-[#0f0f14] dark:text-[#e8e6ff] [&_h1]:text-[13px] [&_h1]:font-semibold [&_h2]:text-[12px] [&_h2]:font-semibold [&_b]:font-semibold [&_strong]:font-semibold [&_em]:italic [&_i]:italic"
+                          />
+                        </div>
+
+                        <div className="mt-1.5 flex justify-end border-t border-[#F5F3FF] pt-1.5 dark:border-[#2a2a3d]">
+                          <button
+                            type="submit"
+                            disabled={!replyHasContent[m.id]}
+                            className="flex items-center gap-1 rounded-full bg-[#7C3AED] px-3 py-1 text-[10px] font-light text-white transition hover:bg-[#6D28D9] disabled:opacity-40"
+                          >
+                            <Send className="h-2.5 w-2.5" /> Comentar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex items-center gap-2 border-t border-[#E5E0EB] p-3">
+      <div className="flex items-center gap-2 border-t border-[#E5E0EB] p-3 dark:border-[#2a2a3d]">
         <input
           value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="Escreva uma mensagem..."
-          className="flex-1 rounded-full border border-[#E5E0EB] bg-[#F9F8FF] px-4 py-2 text-[13px] font-light text-[#0f0f14] placeholder:text-[#9CA3AF] outline-none focus:border-[#7C3AED]"
+          className="flex-1 rounded-full border border-[#E5E0EB] bg-[#F9F8FF] px-4 py-2 text-[12px] font-light text-[#0f0f14] placeholder:text-[#9CA3AF] outline-none focus:border-[#7C3AED] dark:border-[#2a2a3d] dark:bg-[#1e1e2e] dark:text-[#e8e6ff]"
         />
-        <button onClick={handleSend} className="grid h-9 w-9 place-items-center rounded-full bg-[#7C3AED] text-white transition hover:bg-[#6D28D9]">
-          <Send className="h-4 w-4" />
+        <button onClick={handleSend} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#7C3AED] text-white transition hover:bg-[#6D28D9]">
+          <Send className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -205,7 +397,10 @@ export function EventosPage() {
   const [attending, setAttending] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<EventFormat | ''>('');
 
-  const shown = filter ? MOCK_EVENTS.filter(e => e.format === filter) : MOCK_EVENTS;
+  const today = new Date().toISOString().slice(0, 10);
+  const shown = MOCK_EVENTS
+    .filter(e => e.date >= today)
+    .filter(e => !filter || e.format === filter);
 
   const handleAttend = (event: MockEvent) => {
     setAttending(prev => new Set([...prev, event.id]));

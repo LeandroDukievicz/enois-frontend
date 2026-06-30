@@ -43,9 +43,9 @@ const phases = [
 
 export const RoadmapSection = () => {
   return (
-    <section className="relative overflow-hidden bg-[#F5F3FF] px-6 py-24" id="roadmap">
+    <section className="relative overflow-hidden bg-[#F5F3FF] dark:bg-linear-to-b dark:from-[#060411] dark:to-[#04030d] px-6 py-24" id="roadmap">
       <div className="mx-auto max-w-300">
-        <h2 className="text-center text-[44px] font-light tracking-tight text-[#0f0f14] md:text-[52px]">
+        <h2 className="text-center text-[44px] font-light tracking-tight text-[#0f0f14] dark:text-[#e8e6ff] md:text-[52px]">
           Roadmap aberto
         </h2>
 
@@ -66,15 +66,15 @@ export const RoadmapSection = () => {
               </div>
 
               <div className="flex flex-col justify-center gap-1">
-                <h3 className="text-[28px] font-light text-[#0f0f14]">{phase.status}</h3>
+                <h3 className="text-[28px] font-light text-[#0f0f14] dark:text-[#e8e6ff]">{phase.status}</h3>
                 <ul className="mt-6 space-y-5">
                   {phase.items.map((item) => (
                     <li key={item} className="flex items-start gap-4">
                       <span
-                        className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#0f0f14]"
+                        className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#0f0f14] dark:bg-[#e8e6ff]"
                         aria-hidden="true"
                       />
-                      <span className="text-[16px] font-light leading-relaxed text-[#1a1a2e]">
+                      <span className="text-[16px] font-light leading-relaxed text-[#1a1a2e] dark:text-[#9CA3AF]">
                         {item}
                       </span>
                     </li>
@@ -86,7 +86,7 @@ export const RoadmapSection = () => {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-[#F9F8FF]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-[#F9F8FF] dark:opacity-0" />
     </section>
   );
 };

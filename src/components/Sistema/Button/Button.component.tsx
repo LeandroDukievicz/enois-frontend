@@ -8,7 +8,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary: 'bg-[#7C3AED] text-white shadow-[0_14px_28px_rgba(124,58,237,0.22)] hover:bg-[#6D28D9]',
-  secondarySoft: 'border border-[#E5E0EB] bg-white text-[#352451] shadow-[0_8px_18px_rgba(52,36,81,0.05)] hover:border-[#7C3AED] hover:text-[#7C3AED]',
+  secondarySoft: 'border border-[#E5E0EB] bg-white text-[#352451] shadow-[0_8px_18px_rgba(52,36,81,0.05)] hover:border-[#7C3AED] hover:text-[#7C3AED] dark:bg-transparent dark:border-[#4a3a6e] dark:text-[#e8e6ff] dark:hover:border-[#7C3AED] dark:hover:text-[#a78bfa]',
   outlineDark: 'border border-[#374151] bg-transparent text-[#374151] hover:border-[#7C3AED] hover:text-[#7C3AED]',
   outlineWhite: 'border border-white bg-transparent text-white hover:bg-white/10',
   white: 'bg-white text-[#7C3AED] hover:bg-neutral-50',

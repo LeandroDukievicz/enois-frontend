@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useAuth } from './AuthContext';
 
 interface ThemeContextType {
   isDark: boolean;
@@ -9,17 +8,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
 
   useEffect(() => {
     const root = document.documentElement;
-    if (isDark && isAuthenticated) {
+    if (isDark) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [isDark, isAuthenticated]);
+  }, [isDark]);
 
   const toggle = () => {
     setIsDark(p => {

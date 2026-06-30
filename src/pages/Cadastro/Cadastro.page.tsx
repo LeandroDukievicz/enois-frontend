@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/Sistema/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { authApi } from '../../lib/api/auth';
@@ -20,7 +22,7 @@ const GoogleIcon = () => (
 );
 
 const AppleIcon = () => (
-  <img src={appleLogo} alt="" className="block h-4.5 w-auto" />
+  <img src={appleLogo} alt="" className="block h-4.5 w-auto dark:invert" />
 );
 
 const EyeIcon = ({ open }: { open: boolean }) => (
@@ -38,6 +40,7 @@ const EyeIcon = ({ open }: { open: boolean }) => (
 
 export const CadastroPage = () => {
   const { login, signup } = useAuth();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<'cadastro' | 'entrar'>('cadastro');
   const [forgotPassword, setForgotPassword] = useState(false);
@@ -95,7 +98,7 @@ export const CadastroPage = () => {
       {/* Painel esquerdo */}
       <aside
         className="relative hidden flex-col justify-between overflow-hidden p-16 md:flex md:w-[44%]"
-        style={{ background: 'linear-gradient(135deg, #3B1E7A 0%, #7C3AED 55%, #A78BFA 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #150d30 0%, #3b1773 50%, #5b21b6 100%)' }}
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -137,7 +140,15 @@ export const CadastroPage = () => {
       </aside>
 
       {/* Painel direito */}
-      <div className="flex flex-1 items-center justify-center bg-[#F9F8FF] px-8 py-6">
+      <div className="flex flex-1 flex-col bg-[#F9F8FF] px-8 py-6">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-1.5 self-start text-[13px] font-light text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#7C3AED] dark:hover:text-[#a78bfa] transition-colors"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </button>
+        <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-[420px]">
 
           {/* Toggle */}
@@ -222,8 +233,9 @@ export const CadastroPage = () => {
             <form onSubmit={forgotPassword ? handleForgotSubmit : handleSubmit} className="flex flex-col gap-3">
               {tab === 'cadastro' && !forgotPassword && (
                 <div>
-                  <label className="mb-1 block text-[13px] font-light text-[#0f0f14]">Nome completo</label>
+                  <label htmlFor="name-input" className="mb-1 block text-[13px] font-light text-[#0f0f14]">Nome completo</label>
                   <input
+                    id="name-input"
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
@@ -235,8 +247,9 @@ export const CadastroPage = () => {
               )}
 
               <div>
-                <label className="mb-1 block text-[13px] font-light text-[#0f0f14]">E-mail</label>
+                <label htmlFor="email-input" className="mb-1 block text-[13px] font-light text-[#0f0f14]">E-mail</label>
                 <input
+                  id="email-input"
                   type="email"
                   value={forgotPassword ? forgotEmail : email}
                   onChange={e => forgotPassword ? setForgotEmail(e.target.value) : setEmail(e.target.value)}
@@ -249,7 +262,7 @@ export const CadastroPage = () => {
               {!forgotPassword && (
                 <div>
                   <div className="mb-1 flex items-center justify-between">
-                    <label className="text-[13px] font-light text-[#0f0f14]">Senha</label>
+                    <label htmlFor="password-input" className="text-[13px] font-light text-[#0f0f14]">Senha</label>
                     {tab === 'entrar' && (
                       <button
                         type="button"
@@ -262,6 +275,7 @@ export const CadastroPage = () => {
                   </div>
                   <div className="relative">
                     <input
+                      id="password-input"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -315,6 +329,7 @@ export const CadastroPage = () => {
               </button>
             </p>
           )}
+        </div>
         </div>
       </div>
     </div>

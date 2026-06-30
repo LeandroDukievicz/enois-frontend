@@ -1,8 +1,59 @@
 import { useState, useRef } from 'react';
-import { Settings, Clock, Camera, Plus, Save, X, Sun, Moon, Bell, Mail } from 'lucide-react';
+import { Settings, Clock, Camera, Plus, Save, X, Sun, Moon, Bell, Mail, Bookmark, Calendar, MessageCircle, Users, Heart } from 'lucide-react';
 import { AppShell, Avatar } from '../../components/AppShell';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+
+/* ── Atividade recente ───────────────────────────── */
+type ActivityType = 'save' | 'event' | 'connect' | 'comment' | 'post';
+interface ActivityItem { id: string; type: ActivityType; description: string; detail?: string; createdAt: string; }
+
+const ACTIVITY_ICON: Record<ActivityType, React.ElementType> = {
+  save: Bookmark, event: Calendar, connect: Users, comment: MessageCircle, post: Heart,
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'agora';
+  if (min < 60) return `${min}min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+const MOCK_ACTIVITY: ActivityItem[] = [
+  { id: 'a1', type: 'event', description: 'Confirmou presença em Meetup React Brasil — Julho 2026', createdAt: new Date(Date.now() - 90 * 60000).toISOString() },
+  { id: 'a2', type: 'connect', description: 'Conectou-se com Diego de Souza F.', createdAt: new Date(Date.now() - 4 * 3600000).toISOString() },
+  { id: 'a3', type: 'comment', description: 'Comentou em uma publicação de Iraê C. Brandão', detail: 'Concordo! Os Server Actions mudaram muito a forma de trabalhar com formulários.', createdAt: new Date(Date.now() - 8 * 3600000).toISOString() },
+  { id: 'a4', type: 'post', description: 'Compartilhou uma publicação no feed', detail: 'Dica rápida: use o hook `use()` do React 19 para unwrap Promises diretamente no render.', createdAt: new Date(Date.now() - 18 * 3600000).toISOString() },
+];
+
+function readActivityItems(): ActivityItem[] {
+  const real: ActivityItem[] = [];
+  try {
+    const feed: ActivityItem[] = JSON.parse(localStorage.getItem('user_activity_feed') ?? '[]');
+    real.push(...feed);
+  } catch {}
+  try {
+    const saved: Array<{ id: string; authorName: string; content: string; createdAt: string }> =
+      JSON.parse(localStorage.getItem('saved_posts_data') ?? '[]');
+    saved.forEach(p => {
+      const id = `save-${p.id}`;
+      if (!real.some(r => r.id === id)) {
+        real.push({
+          id, type: 'save',
+          description: `Salvou uma publicação de ${p.authorName}`,
+          detail: (p.content ?? '').replace(/<[^>]*>/g, '').slice(0, 100),
+          createdAt: p.createdAt ?? new Date().toISOString(),
+        });
+      }
+    });
+  } catch {}
+  const seen = new Set(real.map(r => r.id));
+  const all = [...real, ...MOCK_ACTIVITY.filter(m => !seen.has(m.id))];
+  return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
 
 /* ── Toggle ─────────────────────────────────────── */
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label?: string }) {
@@ -248,6 +299,7 @@ function EditModal({ onClose }: { onClose: () => void }) {
 export function PerfilPage() {
   const { user, updateUser } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
+  const [activityItems, setActivityItems] = useState<ActivityItem[]>(readActivityItems);
   const [coverUrl, setCoverUrl] = useState<string | null>(
     () => localStorage.getItem('cover_image')
   );
@@ -261,6 +313,7 @@ export function PerfilPage() {
     setDisponibilidade(localStorage.getItem('profile_disponibilidade') ?? '');
     setBio(localStorage.getItem('profile_bio') ?? '');
     setHabilidades(localStorage.getItem('profile_habilidades') ?? '');
+    setActivityItems(readActivityItems());
   };
 
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -355,18 +408,34 @@ export function PerfilPage() {
               </div>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-3">
-              <span className="text-[13px] text-[#6B7280]">· 0 conexões</span>
+              <span className="text-[13px] text-[#6B7280]">0 conexões</span>
             </div>
           </div>
         </div>
 
         {/* Grid de conteúdo */}
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-          {/* Publicações recentes */}
+          {/* Atividade recente */}
           <div className="rounded-2xl border border-[#E5E0EB] bg-white p-5">
-            <h2 className="text-[16px] font-light text-[#0f0f14]">Publicações recentes</h2>
-            <div className="mt-4 rounded-xl border border-[#E5E0EB] px-5 py-12 text-center">
-              <p className="text-[13px] font-light text-[#9CA3AF]">Nenhuma publicação ainda.</p>
+            <h2 className="text-[16px] font-light text-[#0f0f14]">Atividade recente</h2>
+            <div className="mt-4 space-y-4">
+              {activityItems.map(item => {
+                const Icon = ACTIVITY_ICON[item.type];
+                return (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EDE8F5]">
+                      <Icon className="h-4 w-4 text-[#7C3AED]" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-light text-[#0f0f14]">{item.description}</p>
+                      {item.detail && (
+                        <p className="mt-0.5 line-clamp-2 text-[12px] font-light text-[#9CA3AF]">{item.detail}</p>
+                      )}
+                      <p className="mt-0.5 text-[11px] text-[#9CA3AF]">{timeAgo(item.createdAt)}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

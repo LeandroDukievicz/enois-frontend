@@ -114,12 +114,12 @@ function BecomeMentorModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="space-y-4 px-6 pb-6">
           <div>
-            <label className={labelCls}>Especialidades (separadas por vírgula)</label>
-            <input value={specialties} onChange={e => setSpecialties(e.target.value)} placeholder="Java, Spring, React" className={inputCls} />
+            <label htmlFor="mentor-specialties" className={labelCls}>Especialidades (separadas por vírgula)</label>
+            <input id="mentor-specialties" value={specialties} onChange={e => setSpecialties(e.target.value)} placeholder="Java, Spring, React" className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Investimento</label>
-            <input value={price} onChange={e => setPrice(e.target.value)} placeholder="R$ 0,00" className={inputCls} />
+            <label htmlFor="mentor-price" className={labelCls}>Investimento</label>
+            <input id="mentor-price" value={price} onChange={e => setPrice(e.target.value)} placeholder="R$ 0,00" className={inputCls} />
           </div>
           <button
             onClick={onClose}

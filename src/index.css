@@ -29,6 +29,7 @@ html.dark body {
   color: #e8e6ff;
 }
 
+
 /* Superfícies brancas → dark surface */
 html.dark [class~="bg-white"] {
   background-color: #13131f !important;

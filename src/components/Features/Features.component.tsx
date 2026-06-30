@@ -36,15 +36,15 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <section className="relative overflow-hidden bg-[#EEEDF2] px-6 py-24" id="features">
+    <section className="relative overflow-hidden bg-[#EEEDF2] dark:bg-linear-to-b dark:from-[#0f0b1c] dark:to-[#0b0817] px-6 py-24" id="features">
       <div className="mx-auto max-w-300">
-        <h2 className="text-[42px] font-light leading-tight tracking-tight text-[#0f0f14] md:text-[52px]">
+        <h2 className="text-[42px] font-light leading-tight tracking-tight text-[#0f0f14] dark:text-[#e8e6ff] md:text-[52px]">
           O que já construímos
         </h2>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           {features.map((feature) => (
-            <article key={feature.id} className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <article key={feature.id} className="overflow-hidden rounded-2xl bg-white dark:bg-[#13131f] shadow-sm">
               <div className="h-80 overflow-hidden">
                 <img
                   src={feature.image}
@@ -53,10 +53,10 @@ export const FeaturesSection = () => {
                 />
               </div>
               <div className="px-8 pb-8 pt-6 text-center">
-                <h3 className="text-[22px] font-light leading-snug text-[#0f0f14]">
+                <h3 className="text-[22px] font-light leading-snug text-[#0f0f14] dark:text-[#e8e6ff]">
                   {feature.title}
                 </h3>
-                <p className="mt-3 text-[15px] font-light leading-relaxed text-[#6B7280]">
+                <p className="mt-3 text-[15px] font-light leading-relaxed text-[#6B7280] dark:text-[#9CA3AF]">
                   {feature.description}
                 </p>
               </div>
@@ -65,7 +65,7 @@ export const FeaturesSection = () => {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-[#F9F8FF]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-[#F9F8FF] dark:opacity-0" />
     </section>
   );
 };
