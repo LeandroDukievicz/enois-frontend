@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToast = useCallback(
-    (message: string, type: ToastType = 'success', duration = 4000) => {
+    (message: string, type: ToastType = 'success', duration = 120000) => {
       const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       // mantém no máximo 3 toasts visíveis
       setToasts(prev => [...prev.slice(-2), { id, message, type }]);

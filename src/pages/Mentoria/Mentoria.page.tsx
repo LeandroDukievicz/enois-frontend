@@ -140,7 +140,33 @@ function MentorCard({ mentor }: { mentor: Mentor }) {
 
   const handleSchedule = () => {
     setScheduled(true);
-    setTimeout(() => navigate('/mensagens'), 800);
+
+    const convId = `mentor-${mentor.id}-${Date.now()}`;
+    const autoMsg = {
+      id: '1',
+      from: 'Você',
+      text: `Olá, ${mentor.name}! Tenho interesse em agendar uma sessão de mentoria com você. Quais são os seus horários disponíveis?`,
+      time: new Date().toISOString(),
+    };
+
+    const conv = {
+      id: convId,
+      kind: 'DIRECT' as const,
+      title: mentor.name,
+      participantIds: [mentor.id],
+      lastMessage: autoMsg.text,
+      time: autoMsg.time,
+      unread: 0,
+    };
+
+    try {
+      const prev = JSON.parse(localStorage.getItem('mock_conversations') ?? '[]');
+      localStorage.setItem('mock_conversations', JSON.stringify([conv, ...prev]));
+      localStorage.setItem(`mock_messages_${convId}`, JSON.stringify([autoMsg]));
+      localStorage.setItem('pending_open_conv', convId);
+    } catch {}
+
+    setTimeout(() => navigate('/mensagens'), 400);
   };
 
   const formatSlot = (iso: string) =>

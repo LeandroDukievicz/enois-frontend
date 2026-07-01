@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, seedAuthUser } from '../utils/renderWithProviders';
 import { InicioPage } from '../../pages/Inicio';
@@ -16,9 +16,20 @@ describe('InicioPage — Feed', () => {
     seedAuthUser();
   });
 
+  /* Abre o modal de compositor */
+  const openComposer = async () => {
+    await user.click(screen.getByRole('button', { name: /criar publicação/i }));
+  };
+
+  /* Digita no editor contenteditable (JSDOM não suporta user.type em contenteditable) */
+  const typeInEditor = (text: string) => {
+    const editor = screen.getByRole('textbox', { name: /conteúdo da publicação/i });
+    editor.textContent = text;
+    fireEvent.input(editor);
+  };
+
   it('renderiza os 5 posts de comunidade ao carregar', () => {
     renderWithProviders(<InicioPage />);
-    // Community posts authors
     expect(screen.getByText('Iraê C. Brandão')).toBeInTheDocument();
     expect(screen.getByText('Beatriz Alves')).toBeInTheDocument();
     expect(screen.getByText('Victor Penachio')).toBeInTheDocument();
@@ -35,34 +46,36 @@ describe('InicioPage — Feed', () => {
 
   it('cria um novo post e o exibe no topo do feed', async () => {
     renderWithProviders(<InicioPage />);
-    const textarea = screen.getByPlaceholderText(/compartilhe algo/i);
-    await user.type(textarea, 'Meu primeiro post de teste');
-    await user.click(screen.getByRole('button', { name: /publicar/i }));
+    await openComposer();
+    typeInEditor('Meu primeiro post de teste');
+    await user.click(screen.getByRole('button', { name: /^publicar$/i }));
     await waitFor(() => {
       expect(screen.getByText('Meu primeiro post de teste')).toBeInTheDocument();
     });
-    // novo post deve aparecer antes dos posts de comunidade
     const articles = screen.getAllByRole('article');
     expect(within(articles[0]).getByText('Meu primeiro post de teste')).toBeInTheDocument();
   });
 
-  it('botão Publicar fica desabilitado com textarea vazio', () => {
+  it('botão Publicar fica desabilitado com textarea vazio', async () => {
     renderWithProviders(<InicioPage />);
-    const btn = screen.getByRole('button', { name: /publicar/i });
+    await openComposer();
+    const btn = screen.getByRole('button', { name: /^publicar$/i });
     expect(btn).toBeDisabled();
   });
 
-  it('publicar limpa o textarea após criar o post', async () => {
+  it('publicar fecha o modal e exibe o post no feed', async () => {
     renderWithProviders(<InicioPage />);
-    const textarea = screen.getByPlaceholderText(/compartilhe algo/i);
-    await user.type(textarea, 'Post temporário');
-    await user.click(screen.getByRole('button', { name: /publicar/i }));
-    await waitFor(() => { expect(textarea).toHaveValue(''); });
+    await openComposer();
+    typeInEditor('Post temporário');
+    await user.click(screen.getByRole('button', { name: /^publicar$/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('textbox', { name: /conteúdo da publicação/i })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Post temporário')).toBeInTheDocument();
   });
 
   it('curtir aumenta a contagem de reações', async () => {
     renderWithProviders(<InicioPage />);
-    // Iraê's post has 14 reactions
     const articles = screen.getAllByRole('article');
     const firstPost = articles[0];
     const likeBtn = within(firstPost).getByRole('button', { name: /curtir/i });
@@ -114,10 +127,10 @@ describe('InicioPage — Feed', () => {
 
   it('post criado como "Projeto" aparece no feed', async () => {
     renderWithProviders(<InicioPage />);
-    const textarea = screen.getByPlaceholderText(/compartilhe algo/i);
-    await user.type(textarea, 'Projeto incrível');
+    await openComposer();
+    typeInEditor('Projeto incrível');
     await user.click(screen.getByRole('button', { name: /^projeto$/i }));
-    await user.click(screen.getByRole('button', { name: /publicar/i }));
+    await user.click(screen.getByRole('button', { name: /^publicar$/i }));
     await waitFor(() => {
       expect(screen.getByText('Projeto incrível')).toBeInTheDocument();
     });

@@ -18,7 +18,7 @@ const problems = [
 
 export const ProblemSection = () => {
   return (
-    <section className="relative overflow-hidden bg-[#F9F8FF] dark:bg-linear-to-b dark:from-[#140d25] dark:to-[#0f0b1c] px-6 py-32" id="o-problema">
+    <section className="relative overflow-hidden bg-[#F9F8FF] dark:bg-linear-to-b dark:from-[#140d25] dark:to-[#0b0817] px-6 py-32" id="o-problema">
       <div className="mx-auto max-w-300">
         <div className="mb-20">
           <h2 className="mt-8 max-w-175 text-5xl font-light leading-tight tracking-tight text-gray-900 dark:text-[#e8e6ff] md:text-6xl">
@@ -53,7 +53,7 @@ export const ProblemSection = () => {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-[#EEEDF2] dark:opacity-0" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-[#EEEDF2] dark:to-[#0b0817]" />
     </section>
   );
 };

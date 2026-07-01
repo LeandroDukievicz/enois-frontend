@@ -1,9 +1,8 @@
 import carImg from '../../assets/imagens/animacoes/carro.png';
-import melissaAvatar from '../../assets/imagens/equipe/foto-melissa.png';
 
 export const OpenLetterSection = () => {
   return (
-    <section className="relative overflow-hidden bg-[#F9F8FF] dark:bg-linear-to-b dark:from-[#0b0817] dark:to-[#080614] py-24" id="carta-aberta">
+    <section className="relative overflow-hidden bg-linear-to-b from-[#EEEDF2] to-[#F9F8FF] dark:from-[#0b0817] dark:to-[#080614] py-16" id="carta-aberta">
 
       {/* Carro absoluto, colado na borda direita */}
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[52%] md:block">
@@ -17,45 +16,46 @@ export const OpenLetterSection = () => {
 
       {/* Conteúdo de texto — lado esquerdo */}
       <div className="relative z-10 mx-auto max-w-300 px-10 md:px-20">
-        <div className="max-w-88">
+        <div className="relative max-w-88 py-10 text-center">
 
+          {/* Aspas abertura — topo esquerdo */}
           <span
-            className="select-none text-[52px] leading-none text-[#0f0f14] dark:text-[#e8e6ff]"
+            className="select-none absolute top-0 left-0 text-[72px] leading-none text-[#0f0f14] dark:text-[#e8e6ff]"
             style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic' }}
             aria-hidden="true"
           >
             &ldquo;
           </span>
 
-          <div className="mt-1">
-            <p className="text-[18px] font-light leading-[1.75] text-[#0f0f14] dark:text-[#e8e6ff]">
-              Oi, eu sou a Melissa. Criei a Conexão porque cansei de redes onde todos fingem
+          {/* Texto centrado entre as aspas */}
+          <div className="px-8">
+            <p className="text-[30px] font-light leading-[1.25] tracking-tight text-[#0f0f14] dark:text-[#e8e6ff] md:text-[36px]">
+              Oi, eu sou a Melissa.
+            </p>
+            <p className="mt-3 text-[18px] font-light leading-[1.6] text-[#3d3550] dark:text-[#c4bbdc]">
+              Criei a Conexão porque cansei de redes onde todos fingem
               que estão bem, crescendo e vencendo. Cansei de empacotar minha trajetória em
               otimismo forçado para ser levada a sério.
             </p>
-            <span
-              className="select-none block text-[52px] leading-none text-[#0f0f14] dark:text-[#e8e6ff]"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic' }}
-              aria-hidden="true"
-            >
-              &rdquo;
-            </span>
           </div>
 
-          <div className="mt-10 flex items-center gap-4">
-            <img
-              src={melissaAvatar}
-              alt="Melissa Monfre"
-              className="h-12 w-12 shrink-0 rounded-full object-cover"
-            />
-            <div>
-              <p className="text-[15px] font-medium leading-snug text-[#0f0f14] dark:text-[#e8e6ff]">
-                Melissa Monfre
-              </p>
-              <p className="text-[14px] font-light leading-snug text-[#6B7280] dark:text-[#9CA3AF]">
-                Fundadora da Conexão
-              </p>
-            </div>
+          {/* Aspas fechamento — baixo direito */}
+          <span
+            className="select-none absolute bottom-0 right-0 text-[72px] leading-none text-[#0f0f14] dark:text-[#e8e6ff]"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic' }}
+            aria-hidden="true"
+          >
+            &rdquo;
+          </span>
+
+          {/* Assinatura abaixo do texto */}
+          <div className="mt-8 flex flex-col items-center gap-1">
+            <p className="text-[15px] font-medium leading-snug text-[#0f0f14] dark:text-[#e8e6ff]">
+              Melissa Monfre
+            </p>
+            <p className="text-[14px] font-light leading-snug text-[#6B7280] dark:text-[#9CA3AF]">
+              Fundadora da Conexão
+            </p>
           </div>
 
         </div>
