@@ -6,6 +6,7 @@ import type { CollectionOverrides } from "@/types/preferences/theme-collection-o
 import { PAGE_PAINT_TARGETS, paintGradientCss } from "./build-background-style";
 import { withAlpha } from "./build-background-style";
 import { buildAccentTokens } from "./build-theme-tokens";
+import { resolveCommunityTheme } from "./community-collection";
 
 /**
  * Chaves do destaque que a cor livre sobrescreve num tema. Superfícies, bordas,
@@ -31,14 +32,15 @@ const ACCENT_OVERRIDE_KEYS = [
 ] as const;
 
 /**
- * Resolve o identificador para um tema da coleção.
+ * Resolve o identificador para uma coleção: as hardcoded da coleção e os temas da galeria
+ * publicados, já registrados por `community-collection`.
  *
  * Identificador inválido (ou tema removido em uma versão futura) devolve `null` —
  * e a aplicação cai no padrão da marca, nunca num tema pela metade.
  */
 export function resolveThemeCollection(id: string | null | undefined): ThemeCollection | null {
   if (!id) return null;
-  return THEME_COLLECTIONS.find((collection) => collection.id === id) ?? null;
+  return THEME_COLLECTIONS.find((collection) => collection.id === id) ?? resolveCommunityTheme(id);
 }
 
 /**

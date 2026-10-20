@@ -5,6 +5,8 @@ export type PreferencesStorageState = {
   themeSettings?: unknown;
   themeCollection?: unknown;
   themeCollectionUpdatedAt?: unknown;
+  /** Pacote do tema da galeria aplicado, cru como a API devolve. */
+  communityTheme?: unknown;
   widgetBackground?: unknown;
   pageBackground?: unknown;
   accentAlpha?: unknown;

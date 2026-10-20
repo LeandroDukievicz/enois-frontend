@@ -1,5 +1,6 @@
 import { DEFAULT_THEME_SETTINGS } from "@/constants/theme-defaults";
 import type { BackgroundStyle } from "@/types/preferences/background-style";
+import type { CommunityTheme } from "@/types/preferences/community-theme";
 import type { Theme } from "@/types/preferences/theme";
 import type { ThemeSettings } from "@/types/preferences/theme-settings";
 import type { PreferencesState } from "@/types/stores/preferences-state";
@@ -9,6 +10,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { resolveThemeCollection } from "@/lib/theme/build-collection-css";
 import { clampThemeSettings } from "@/lib/theme/build-theme-tokens";
+import { isCommunityThemeId } from "@/lib/theme/community-collection";
 
 const PREFERENCES_STORAGE_KEY = "connect-grow-preferences";
 const LEGACY_THEME_STORAGE_KEY = "connect-grow-theme";
@@ -86,10 +88,34 @@ function normalizeBackgroundStyle(value: unknown): BackgroundStyle | null {
  * Coleção temática do storage: só aceita identificador que existe hoje.
  *
  * Um tema removido (ou um valor inventado no localStorage) volta a `null` — o
- * padrão da marca — em vez de carregar um tema pela metade.
+ * padrão da marca — em vez de carregar um tema pela metade. Id de galeria sem o
+ * pacote correspondente também volta a `null`: o tema existe, mas não tem o que
+ * resolver, e aplicar metade dele seria pior que aplicar o padrão.
  */
-function normalizeThemeCollection(value: unknown): string | null {
-  return typeof value === "string" ? (resolveThemeCollection(value)?.id ?? null) : null;
+function normalizeThemeCollection(value: unknown, community: CommunityTheme | null): string | null {
+  if (typeof value !== "string") return null;
+  if (resolveThemeCollection(value)) return value;
+  return community && community.id === value ? value : null;
+}
+
+/** Pacote da galeria do storage: id no formato que o backend gera e JSON dentro do teto dele. */
+function normalizeCommunityTheme(value: unknown): CommunityTheme | null {
+  if (typeof value !== "object" || value === null) return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.id !== "string" || !isCommunityThemeId(raw.id)) return null;
+  if (
+    typeof raw.packageJson !== "string" ||
+    raw.packageJson.length === 0 ||
+    raw.packageJson.length > 4096
+  ) {
+    return null;
+  }
+  return {
+    id: raw.id,
+    name: typeof raw.name === "string" ? raw.name : "",
+    modeDefault: raw.modeDefault === "dark" ? "dark" : "light",
+    packageJson: raw.packageJson,
+  };
 }
 
 const preferencesStorage = {
@@ -102,7 +128,12 @@ const preferencesStorage = {
         if (parsed.state) {
           parsed.state.theme = parsed.state.theme === "dark" ? "dark" : "light";
           parsed.state.themeSettings = normalizeThemeSettings(parsed.state.themeSettings);
-          parsed.state.themeCollection = normalizeThemeCollection(parsed.state.themeCollection);
+          const communityTheme = normalizeCommunityTheme(parsed.state.communityTheme);
+          parsed.state.communityTheme = communityTheme;
+          parsed.state.themeCollection = normalizeThemeCollection(
+            parsed.state.themeCollection,
+            communityTheme,
+          );
           // Estado salvo ANTES desta data existir: quem já tinha um tema escolhido aqui vale como
           // "escolhido agora" — senão a primeira recarga depois da correção deixaria o valor
           // antigo da conta vencer e a pessoa perderia o tema que estava vendo.
@@ -169,6 +200,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       themeCollection: null,
       /** Quando a coleção foi escolhida AQUI (para resolver conflito com a conta). */
       themeCollectionUpdatedAt: null,
+      /** Pacote do tema da galeria ativo; `null` com coleção hardcoded ou sem coleção. */
+      communityTheme: null,
       widgetBackground: null,
       pageBackground: null,
       accentAlpha: 100,
@@ -184,6 +217,7 @@ export const usePreferencesStore = create<PreferencesState>()(
           themeSettings: DEFAULT_THEME_SETTINGS,
           themeCollection: null,
           themeCollectionUpdatedAt: Date.now(),
+          communityTheme: null,
           widgetBackground: null,
           pageBackground: null,
           accentAlpha: 100,
@@ -191,7 +225,14 @@ export const usePreferencesStore = create<PreferencesState>()(
           pageAlpha: null,
         }),
       setThemeCollection: (themeCollection: string | null) =>
-        set({ themeCollection, themeCollectionUpdatedAt: Date.now() }),
+        set((state) => ({
+          themeCollection,
+          themeCollectionUpdatedAt: Date.now(),
+          // Trocar para um tema hardcoded (ou o padrão) deixa de ter pacote que resolva a id.
+          communityTheme:
+            themeCollection && isCommunityThemeId(themeCollection) ? state.communityTheme : null,
+        })),
+      setCommunityTheme: (communityTheme: CommunityTheme | null) => set({ communityTheme }),
       setWidgetBackground: (widgetBackground: BackgroundStyle | null) => set({ widgetBackground }),
       setPageBackground: (pageBackground: BackgroundStyle | null) => set({ pageBackground }),
       setAccentAlpha: (accentAlpha: number) => set({ accentAlpha }),
@@ -211,6 +252,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         themeSettings: state.themeSettings,
         themeCollection: state.themeCollection,
         themeCollectionUpdatedAt: state.themeCollectionUpdatedAt,
+        communityTheme: state.communityTheme,
         widgetBackground: state.widgetBackground,
         pageBackground: state.pageBackground,
         accentAlpha: state.accentAlpha,

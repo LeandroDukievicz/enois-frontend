@@ -1,4 +1,5 @@
 import type { BackgroundStyle } from "@/types/preferences/background-style";
+import type { CommunityTheme } from "@/types/preferences/community-theme";
 import type { Theme } from "@/types/preferences/theme";
 import type { ThemeSettings } from "@/types/preferences/theme-settings";
 
@@ -10,6 +11,13 @@ export type PreferencesState = {
   themeCollection: string | null;
   /** Quando a coleção foi escolhida neste dispositivo (conflito com a conta). */
   themeCollectionUpdatedAt: number | null;
+  /**
+   * Pacote do tema da galeria que está em `themeCollection`.
+   *
+   * A coleção é derivada dele na hora, então o pacote é o que sobrevive ao reload: sem ele, o
+   * id da galeria não tem o que resolver e o tema cai no padrão da marca.
+   */
+  communityTheme: CommunityTheme | null;
   /** Cor de widget escolhida (cartões/painéis/menus); `null` = do tema ou da marca. */
   widgetBackground: BackgroundStyle | null;
   /** Plano de fundo da página (atrás de tudo); `null` = do tema ou da marca. */
@@ -24,6 +32,7 @@ export type PreferencesState = {
   setThemeSettings: (settings: ThemeSettings) => void;
   resetThemeSettings: () => void;
   setThemeCollection: (collectionId: string | null) => void;
+  setCommunityTheme: (theme: CommunityTheme | null) => void;
   setWidgetBackground: (style: BackgroundStyle | null) => void;
   setPageBackground: (style: BackgroundStyle | null) => void;
   setAccentAlpha: (alpha: number) => void;

@@ -3,12 +3,18 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { hydratePreferences, usePreferencesStore } from "@/stores/preferences.store";
+import type { CommunityTheme } from "@/types/preferences/community-theme";
 
-import { preferencesApi } from "@/lib/api";
+import { preferencesApi, themesApi } from "@/lib/api";
 import { getSessionToken } from "@/lib/api-client";
 
 import { applyThemeSettings } from "./apply-theme";
 import { resolveThemeCollection } from "./build-collection-css";
+import {
+  hasCommunityTheme,
+  isCommunityThemeId,
+  registerCommunityTheme,
+} from "./community-collection";
 import { syncThemeCollection } from "./sync-theme-collection";
 
 /**
@@ -21,6 +27,7 @@ export function useThemeSync(): void {
   const theme = usePreferencesStore((state) => state.theme);
   const themeSettings = usePreferencesStore((state) => state.themeSettings);
   const themeCollection = usePreferencesStore((state) => state.themeCollection);
+  const communityTheme = usePreferencesStore((state) => state.communityTheme);
   const widgetBackground = usePreferencesStore((state) => state.widgetBackground);
   const pageBackground = usePreferencesStore((state) => state.pageBackground);
   const accentAlpha = usePreferencesStore((state) => state.accentAlpha);
@@ -31,7 +38,13 @@ export function useThemeSync(): void {
     hydratePreferences();
   }, []);
 
+  useCommunityThemePackage(themeCollection, communityTheme);
+
   useEffect(() => {
+    // O pacote precisa virar coleção ANTES de aplicar: é por aqui que um tema publicado
+    // chega ao DOM (o id salvo no storage não carrega as cores junto).
+    if (communityTheme) registerCommunityTheme(communityTheme);
+
     document.documentElement.classList.toggle("dark", theme === "dark");
     applyThemeSettings(
       themeSettings,
@@ -47,6 +60,7 @@ export function useThemeSync(): void {
     theme,
     themeSettings,
     themeCollection,
+    communityTheme,
     widgetBackground,
     pageBackground,
     accentAlpha,
@@ -55,6 +69,45 @@ export function useThemeSync(): void {
   ]);
 
   useThemeAccountSync();
+}
+
+/** Ids cuja busca já está em voo (ou já falhou): um pacote não é pedido duas vezes por sessão. */
+const requestedPackages = new Set<string>();
+
+/**
+ * Busca o pacote de um tema da galeria quando só se tem o id dele.
+ *
+ * É o caminho de quem entra em outro dispositivo: a conta guarda o id (o backend aceita e
+ * confere o que está publicado), mas as cores ficam no pacote — sem ele, o id não resolve e o
+ * app cairia no padrão da marca na frente da pessoa.
+ */
+function useCommunityThemePackage(
+  themeCollection: string | null,
+  communityTheme: CommunityTheme | null,
+): void {
+  const setCommunityTheme = usePreferencesStore((state) => state.setCommunityTheme);
+
+  useEffect(() => {
+    if (!themeCollection || !isCommunityThemeId(themeCollection)) return;
+    if (communityTheme?.id === themeCollection || hasCommunityTheme(themeCollection)) return;
+    if (requestedPackages.has(themeCollection)) return;
+    requestedPackages.add(themeCollection);
+
+    void themesApi
+      .get(themeCollection)
+      .then((theme) =>
+        setCommunityTheme({
+          id: theme.id,
+          name: theme.name,
+          modeDefault: theme.modeDefault,
+          packageJson: theme.packageJson,
+        }),
+      )
+      .catch(() => {
+        // Tema escondido ou removido: fica o padrão da marca, e a próxima escolha sobe de novo.
+        requestedPackages.delete(themeCollection);
+      });
+  }, [themeCollection, communityTheme, setCommunityTheme]);
 }
 
 /**
@@ -85,7 +138,11 @@ function useThemeAccountSync(): void {
   useEffect(() => {
     if (!token || data === undefined) return;
 
-    const fromAccount = resolveThemeCollection(data.theme)?.id ?? null;
+    // Id de galeria vale mesmo sem o pacote em mãos: `useCommunityThemePackage` busca as cores
+    // pelo id. Um hardcoded desconhecido (tema removido) continua valendo como ausência.
+    const fromAccount = isCommunityThemeId(data.theme)
+      ? data.theme
+      : (resolveThemeCollection(data.theme)?.id ?? null);
     if (fromAccount === themeCollection) return;
 
     const accountAt = data.updatedAt ? Date.parse(data.updatedAt) : 0;
