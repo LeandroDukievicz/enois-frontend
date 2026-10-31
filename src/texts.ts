@@ -2128,6 +2128,8 @@ export const texts = {
     mySessionsError: "Não foi possível carregar suas sessões.",
     mySessionsEmpty: "Você ainda não agendou nenhuma mentoria.",
     mySessionsButton: "Minhas sessões",
+    asMenteeTab: "Como mentorado",
+    asMentorTab: "Como mentor",
     mentorFallback: "Mentor",
     schedule: "Agendar",
     rating: "Avaliação",

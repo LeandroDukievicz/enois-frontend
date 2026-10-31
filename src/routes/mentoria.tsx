@@ -212,7 +212,7 @@ function Mentoria() {
           </div>
         </div>
 
-        <MySessionsSection />
+        <MySessionsSection mentorId={myMentor?.id} />
 
         <div id="mentores-lista">
           <h2 className="text-lg font-semibold">{texts.mentoring.featured}</h2>
