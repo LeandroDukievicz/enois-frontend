@@ -558,6 +558,8 @@ export function GroupPostItem({
   const [showComments, setShowComments] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [commentToRemove, setCommentToRemove] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   // Inscrito na query do /me: o proprio post do grupo so mostrava "excluir" depois que outra
   // consulta redesenhava a tela.
@@ -571,6 +573,16 @@ export function GroupPostItem({
       invalidate();
     },
     onError: () => toast(texts.groups.removePostError, "error"),
+  });
+
+  const editComment = useMutation({
+    mutationFn: (commentId: string) =>
+      groupsApi.editComment(groupId, post.id, commentId, { content: editDraft.trim() }),
+    onSuccess: () => {
+      setEditingId(null);
+      invalidate();
+    },
+    onError: () => toast(texts.groups.editCommentError, "error"),
   });
 
   const removeComment = useMutation({
@@ -786,21 +798,72 @@ export function GroupPostItem({
                       {`${formatTime(item.createdAt)} · ${hora(item.createdAt)}`}
                     </time>
 
-                    <RichText
-                      content={item.content}
-                      className="whitespace-pre-line wrap-anywhere text-sm text-text-strong"
-                    />
+                    {editingId === item.id ? (
+                      <div className="mt-1 space-y-2">
+                        <Textarea
+                          value={editDraft}
+                          onChange={(event) => setEditDraft(event.target.value)}
+                          aria-label={texts.groups.editCommentLabel}
+                          maxLength={1200}
+                          rows={2}
+                          className="min-h-10 rounded-lg border border-border-soft bg-transparent px-3 py-2 text-sm text-text-strong"
+                        />
 
-                    {(item.authorId === currentUserId || canModerate) && (
-                      <button
-                        type="button"
-                        onClick={() => setCommentToRemove(item.id)}
-                        className="mt-1 inline-flex items-center gap-1 rounded-full py-1 text-xs text-text-subtle transition hover:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            className="w-auto rounded-full"
+                            disabled={!editDraft.trim() || editComment.isPending}
+                            onClick={() => editComment.mutate(item.id)}
+                          >
+                            {editComment.isPending ? texts.common.saving : texts.common.save}
+                          </Button>
 
-                        <>{texts.groups.removeAction}</>
-                      </button>
+                          <Button
+                            variant="outline"
+                            className="w-auto rounded-full"
+                            disabled={editComment.isPending}
+                            onClick={() => setEditingId(null)}
+                          >
+                            {texts.common.cancel}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <RichText
+                        content={item.content}
+                        className="whitespace-pre-line wrap-anywhere text-sm text-text-strong"
+                      />
+                    )}
+
+                    {editingId !== item.id && (
+                      <div className="flex flex-wrap items-center gap-x-3">
+                        {item.authorId === currentUserId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditDraft(item.content);
+                              setEditingId(item.id);
+                            }}
+                            className="mt-1 inline-flex items-center gap-1 rounded-full py-1 text-xs text-text-subtle transition hover:text-text-strong"
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+
+                            <>{texts.common.edit}</>
+                          </button>
+                        )}
+
+                        {(item.authorId === currentUserId || canModerate) && (
+                          <button
+                            type="button"
+                            onClick={() => setCommentToRemove(item.id)}
+                            className="mt-1 inline-flex items-center gap-1 rounded-full py-1 text-xs text-text-subtle transition hover:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+
+                            <>{texts.groups.removeAction}</>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </li>

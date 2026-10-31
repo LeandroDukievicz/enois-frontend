@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   comments: vi.fn(),
   removeComment: vi.fn(),
+  editComment: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/lib/api", () => ({
   groupsApi: {
     comments: mocks.comments,
     removeComment: mocks.removeComment,
+    editComment: mocks.editComment,
   },
 }));
 vi.mock("@/lib/current-user", () => ({ useCurrentUser: () => ({ data: { id: "me" } }) }));
@@ -95,6 +97,11 @@ describe("comentários de publicação em grupo", () => {
       (item) => item.textContent === texts.groups.removeAction,
     );
 
+  const editButtons = () =>
+    [...host.querySelectorAll<HTMLButtonElement>("li li button")].filter(
+      (item) => item.textContent === texts.common.edit,
+    );
+
   beforeEach(() => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     Object.values(mocks).forEach((mock) => mock.mockReset());
@@ -102,6 +109,7 @@ describe("comentários de publicação em grupo", () => {
       items: [comment("c-mine", "me", "meu comentário"), comment("c-other", "other", "de outra")],
     });
     mocks.removeComment.mockResolvedValue({ id: "c-mine", status: "REMOVED" });
+    mocks.editComment.mockResolvedValue(comment("c-mine", "me", "corrigido"));
     host = document.createElement("div");
     document.body.append(host);
     root = createRoot(host);
@@ -127,6 +135,58 @@ describe("comentários de publicação em grupo", () => {
     await render(true);
 
     expect(removeButtons()).toHaveLength(2);
+  });
+
+  it("mostra editar só no próprio comentário, mesmo para quem modera", async () => {
+    await render(true);
+
+    expect(editButtons()).toHaveLength(1);
+    expect(editButtons()[0]?.closest("li")?.textContent).toContain("meu comentário");
+  });
+
+  it("edita o comentário com o texto aparado e fecha o editor", async () => {
+    await render(false);
+
+    await act(async () => editButtons()[0]?.click());
+    const field = host.querySelector<HTMLTextAreaElement>(
+      `textarea[aria-label='${texts.groups.editCommentLabel}']`,
+    );
+    expect(field?.value).toBe("meu comentário");
+
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(
+        field,
+        "  corrigido  ",
+      );
+      field!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const save = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
+      (item) => item.textContent === texts.common.save,
+    );
+    await act(async () => save?.click());
+    await settle();
+
+    expect(mocks.editComment).toHaveBeenCalledWith("group-1", "post-1", "c-mine", {
+      content: "corrigido",
+    });
+    expect(
+      host.querySelector(`textarea[aria-label='${texts.groups.editCommentLabel}']`),
+    ).toBeNull();
+  });
+
+  it("cancela a edição sem chamar a API", async () => {
+    await render(false);
+
+    await act(async () => editButtons()[0]?.click());
+    const cancel = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
+      (item) => item.textContent === texts.common.cancel,
+    );
+    await act(async () => cancel?.click());
+
+    expect(mocks.editComment).not.toHaveBeenCalled();
+    expect(
+      host.querySelector(`textarea[aria-label='${texts.groups.editCommentLabel}']`),
+    ).toBeNull();
   });
 
   it("confirma e remove o comentário pelo id", async () => {
