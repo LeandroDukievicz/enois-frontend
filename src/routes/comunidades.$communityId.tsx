@@ -826,7 +826,7 @@ function CommunityDetail() {
           </form>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">{texts.communities.detail.feed}</h2>
             {orderedPosts.length === 0 ? (
