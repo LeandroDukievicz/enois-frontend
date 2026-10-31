@@ -539,7 +539,7 @@ function GroupFeed({ group }: { group: GroupView }) {
   );
 }
 
-function GroupPostItem({
+export function GroupPostItem({
   groupId,
   post,
   topicName,
@@ -557,6 +557,7 @@ function GroupPostItem({
   const [comment, setComment] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [commentToRemove, setCommentToRemove] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   // Inscrito na query do /me: o proprio post do grupo so mostrava "excluir" depois que outra
   // consulta redesenhava a tela.
@@ -570,6 +571,15 @@ function GroupPostItem({
       invalidate();
     },
     onError: () => toast(texts.groups.removePostError, "error"),
+  });
+
+  const removeComment = useMutation({
+    mutationFn: (commentId: string) => groupsApi.removeComment(groupId, post.id, commentId),
+    onSuccess: () => {
+      setCommentToRemove(null);
+      invalidate();
+    },
+    onError: () => toast(texts.groups.removeCommentError, "error"),
   });
 
   // Um único fixado por grupo: fixar outro substitui o anterior no backend.
@@ -780,6 +790,18 @@ function GroupPostItem({
                       content={item.content}
                       className="whitespace-pre-line wrap-anywhere text-sm text-text-strong"
                     />
+
+                    {(item.authorId === currentUserId || canModerate) && (
+                      <button
+                        type="button"
+                        onClick={() => setCommentToRemove(item.id)}
+                        className="mt-1 inline-flex items-center gap-1 rounded-full py-1 text-xs text-text-subtle transition hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+
+                        <>{texts.groups.removeAction}</>
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
@@ -820,6 +842,20 @@ function GroupPostItem({
         destructive
         pending={remove.isPending}
         onConfirm={() => remove.mutate()}
+      />
+      <ConfirmDialog
+        open={commentToRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) setCommentToRemove(null);
+        }}
+        title={texts.groups.removeCommentTitle}
+        description={texts.groups.removeCommentDescription}
+        confirmLabel={texts.groups.removeAction}
+        destructive
+        pending={removeComment.isPending}
+        onConfirm={() => {
+          if (commentToRemove) removeComment.mutate(commentToRemove);
+        }}
       />
       <ReportDialog
         targetId={post.id}
