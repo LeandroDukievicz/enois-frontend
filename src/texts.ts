@@ -509,6 +509,7 @@ export const texts = {
     warn: "Avisar o autor",
     deletePost: "Excluir o post",
     ban: "Banir o autor",
+    removeCompany: "Remover a página empresarial",
     applied: "Ação aplicada.",
     actionError: "Não foi possível aplicar a ação.",
     alreadyReviewed: "Esta denúncia já foi revisada.",
@@ -1742,6 +1743,17 @@ export const texts = {
     endError: "Não foi possível encerrar o par. Tente de novo.",
     reenable: "Ligar par de estudo",
     reenableError: "Não foi possível ligar o par de estudo. Tente de novo.",
+    search: {
+      title: "Procurar por assunto",
+      placeholder: "Ex.: Rust, inglês, entrevista",
+      hint: "Digite pelo menos 2 letras para ver quem procura par com o mesmo assunto.",
+      empty: "Ninguém procurando par com esse termo agora.",
+      error: "Não foi possível buscar agora. Tente de novo em instantes.",
+      results: (count: number) =>
+        count === 1 ? "1 objetivo aberto encontrado" : `${count} objetivos abertos encontrados`,
+      action: "Pedir par com esse objetivo",
+      noTopic: "Sem tema",
+    },
   },
 
   events: {
@@ -1760,6 +1772,18 @@ export const texts = {
     empty: "Nenhum evento por aqui ainda.",
     emptyRituals: "Nenhum ritual por aqui ainda.",
     createError: "Não foi possível criar o evento. Confira os dados e tente de novo.",
+    edit: "Editar evento",
+    editTitle: "Editar evento",
+    saveEdit: "Salvar alterações",
+    editSuccess: "Evento atualizado.",
+    editError: "Não foi possível salvar o evento. Confira os dados e tente de novo.",
+    editNotOwner: "Só quem criou o evento pode editar ou excluir.",
+    remove: "Excluir",
+    deleteTitle: "Excluir este evento?",
+    deleteDescription:
+      "O evento some da lista e quem confirmou presença perde a confirmação. Não dá para desfazer.",
+    deleteSuccess: "Evento excluído.",
+    deleteError: "Não foi possível excluir o evento.",
     recurrence: {
       timeRequired: "Eventos que se repetem precisam de horário.",
       notOwner: "Só quem criou o evento muda a repetição.",
@@ -1850,6 +1874,19 @@ export const texts = {
       submit: "Publicar",
       error: "Não foi possível salvar o freela.",
       saved: "Freela publicado.",
+      edit: "Editar freela",
+      editTitle: "Editar freela",
+      saveEdit: "Salvar alterações",
+      editSuccess: "Freela atualizado.",
+      editError: "Não foi possível salvar o freela. Confira os dados e tente de novo.",
+      editClosed: "Freela encerrado não pode ser editado.",
+      remove: "Excluir",
+      deleteTitle: "Excluir este freela?",
+      deleteDescription:
+        "Ele some da lista e das suas publicações. Propostas já abertas perdem a referência. Não dá para desfazer.",
+      deleteSuccess: "Freela excluído.",
+      deleteError: "Não foi possível excluir o freela.",
+      notOwner: "Só quem publicou pode editar ou excluir o freela.",
     },
     seoTitle: "Vagas · Énóis",
     title: "Oportunidades",
@@ -2537,6 +2574,11 @@ export const texts = {
         "A postagem sai do ar e a denúncia é marcada como resolvida. O autor não é banido por esta ação.",
       removeDone: "Postagem removida; denúncia resolvida.",
       warnDone: "Aviso enviado ao autor; a postagem foi mantida.",
+      removeCompany: "Remover página empresarial",
+      removeCompanyTitle: "Remover a página empresarial denunciada",
+      removeCompanyBody:
+        "A página sai do diretório e deixa de existir para quem visita; a denúncia é marcada como resolvida. A conta do dono não é afetada — ele é avisado e pode recorrer.",
+      removeCompanyDone: "Página empresarial removida; denúncia resolvida.",
       actionError: "Não foi possível concluir a ação.",
       filterAll: "Todas",
       reasons: {
@@ -2560,6 +2602,7 @@ export const texts = {
         GAME: "Jogo",
         GROUP_POST: "Post de grupo",
         GROUP_COMMENT: "Comentário de grupo",
+        COMPANY: "Página empresarial",
       } as Record<string, string>,
     },
     tabs: {
@@ -3037,6 +3080,9 @@ export const texts = {
     completed: "Microprojeto concluído!",
     completeError: "Não foi possível concluir. Tente de novo.",
     followError: "Não foi possível atualizar. Tente de novo.",
+    report: "Denunciar página",
+    reportHint:
+      "Conte o que há de errado nesta página. A denúncia vai para a moderação e pode levar à remoção dela.",
   },
 
   guidelines: {
