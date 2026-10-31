@@ -1344,6 +1344,8 @@ export const texts = {
     subscribeHint: "As novidades deste blog aparecem no seu Para você — e só lá.",
     empty: "Nenhum post ainda.",
     emptyDirectory: "Ainda não há blogs por aqui. Crie o seu.",
+    searchPlaceholder: "Buscar blogs por título ou descrição...",
+    searchEmpty: "Nenhum blog encontrado para esta busca.",
     postsCount: (count: number) => `${count} ${count === 1 ? "post" : "posts"}`,
     notFound: "Blog não encontrado.",
     backToBlogs: "Ver todos os blogs",
@@ -2074,6 +2076,8 @@ export const texts = {
   },
 
   mentoring: {
+    searchPlaceholder: "Buscar mentores por nome, usuário ou especialidade...",
+    searchEmpty: "Nenhum mentor encontrado para esta busca.",
     seoTitle: "Mentoria · Énóis",
     loadError: "Não foi possível carregar os mentores agora.",
     retry: "Tentar de novo",

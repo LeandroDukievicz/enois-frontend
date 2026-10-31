@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   Coins,
   Image as ImageIcon,
+  Search,
   Sparkles,
   Star,
   Trash2,
@@ -84,20 +85,28 @@ export const Route = createFileRoute("/mentoria")({
 function Mentoria() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchTerm = query.trim();
   const [createError, setCreateError] = useState<string | null>(null);
   const [slotsForMentorId, setSlotsForMentorId] = useState<string | null>(null);
 
-  const {
-    data: mentorsData,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
+  const allMentors = useQuery({
     queryKey: ["mentors"],
     // 200: a lista já era renderizada inteira; e precisamos achar o perfil do próprio usuário
     // mesmo quando ele não está nas primeiras 20 posições.
     queryFn: () => mentorsApi.list(undefined, null, 200),
   });
+  const searchResults = useQuery({
+    queryKey: ["mentors", "search", searchTerm],
+    queryFn: () => mentorsApi.list(undefined, null, 200, searchTerm),
+    enabled: Boolean(searchTerm),
+  });
+  const {
+    data: mentorsData,
+    isLoading,
+    isError,
+    refetch,
+  } = searchTerm ? searchResults : allMentors;
 
   const mentors = mentorsData?.items ?? [];
 
@@ -107,7 +116,7 @@ function Mentoria() {
   const currentUserId = me?.id ?? null;
   // Quem já tem perfil de mentor edita o existente; "criar" de novo batia em 409 e a tela
   // escondia o motivo atrás de um erro genérico.
-  const myMentor = mentors.find((m) => m.userId === currentUserId);
+  const myMentor = allMentors.data?.items.find((m) => m.userId === currentUserId);
 
   // O link permanente do Jitsi não vem na vitrine (é só do dono): buscado à parte, sob demanda.
   const { data: myMentorRoom } = useQuery({
@@ -126,6 +135,7 @@ function Mentoria() {
       if (!myMentor) {
         // Sem slots ninguem consegue pedir mentoria: abre o dialog de horarios no card do mentor
         // recem-criado (o formulario "Tornar-me mentor" nao tinha essa etapa).
+        setQuery("");
         setSlotsForMentorId(mentor.id);
       }
     },
@@ -219,6 +229,20 @@ function Mentoria() {
 
           <p className="text-sm text-muted-foreground">{texts.mentoring.featuredDescription}</p>
 
+          <div className="relative mt-4">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={texts.mentoring.searchPlaceholder}
+              aria-label={texts.mentoring.searchPlaceholder}
+              className="pl-9"
+            />
+          </div>
+
           {isLoading && (
             <div className="mt-4">
               <ListRowSkeletons count={3} />
@@ -242,7 +266,10 @@ function Mentoria() {
 
           {!isLoading && !isError && mentors.length === 0 && (
             <div className="mt-4 rounded-xl border border-border-soft">
-              <EmptyState icon={Sparkles} title={texts.mentoring.empty} />
+              <EmptyState
+                icon={Sparkles}
+                title={searchTerm ? texts.mentoring.searchEmpty : texts.mentoring.empty}
+              />
             </div>
           )}
 
