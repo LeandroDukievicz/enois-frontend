@@ -127,6 +127,7 @@ Card de post no feed, com todas as ações sociais.
 - Tags
 - Ações: reagir (popover com 8 emojis), comentar, salvar, compartilhar, denunciar
 - Seção de comentários com replies encadeadas
+- Comentários enviados mantêm a ordem cronológica usada no carregamento, inclusive nas respostas; fixados e respostas aceitas preservam seu destaque.
 - Link previews + embeds de vídeo (YouTube, Vimeo, Dailymotion, Twitch)
 
 **Componentes internos:**
