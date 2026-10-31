@@ -119,6 +119,7 @@ Página pública de autenticação com duas abas.
 - Pedido em espera (cancelar) e formulário de pedido com assunto opcional e objetivos populares
 - Erros do pedido explicados pelo código do backend; `BIRTH_DATE_REQUIRED` leva a `/perfil` e `EMAIL_NOT_VERIFIED` a `/seguranca`
 - Módulo desativável `STUDY_PAIRS` (`disabledModules`): desligado, some do menu, a rota cai no `ModuleDisabledGate` e as notificações `STUDY_PAIR_*` ficam ocultas; um `409 STUDY_PAIRS_DISABLED` no pedido (módulo desligado em outra aba) mostra o erro no formulário com o botão "Ligar par de estudo", que religa o módulo (`useReenableModule`, o mesmo do gate) sem reenviar o pedido. Ligado, as notificações abrem esta rota pelo `navigateToHref`
+- Busca por assunto (`GoalSearch`, acima da lista): a partir de 2 letras consulta `GET /study-pairs/search` com espera de 300 ms e mostra os pedidos abertos com aquele termo (objetivo + tema, sem identificar ninguém); "Pedir par com esse objetivo" envia o pedido com o texto escolhido pela mesma rota de sempre
 
 ## `/eventos` - Eventos (`src/routes/eventos.tsx`)
 
@@ -130,13 +131,14 @@ Página pública de autenticação com duas abas.
 - Botão "Confirmar presença" / "Desconfirmar presença" (otimista em todas as listas em cache); card marcado com "Você vai" quando `attending`
 - Filtro `EventRitualsFilter` (Todos / Rituais → `GET /events?recurring=true`, chave `["events","recurring"]`)
 - Quem criou o evento (`canManageRecurrence`) vê o `EventRecurrenceControl` sob o card para trocar ou parar a série
+- O mesmo painel do criador tem "Editar evento" (`PATCH /events/{id}`, formulário pré-preenchido, sem tocar na repetição) e "Excluir" (`DELETE /events/{id}`, com confirmação)
 - Dialog de criação de evento (título, data, hora, realizador, formato, repetição); evento que se repete exige horário; presencial e híbrido
   pedem também cidade e UF estruturadas (`CityStateField`), além do local livre
 - `?evento=<id>` (notificação `EVENT_NEXT_OCCURRENCE`, via `navigateToHref`, que preserva a query string) rola até o card e o destaca por 4 s
 
 **Componentes auxiliares:**
 
-- `CreateEventForm()` - Formulário de criação de evento
+- `EventForm()` - Formulário de criação e de edição do evento (a repetição só aparece na criação)
 - `Field()` - Wrapper de campo
 
 ## `/mensagens` - Mensagens (`src/routes/mensagens.tsx`)
