@@ -389,3 +389,7 @@ fim da URL pública, tem namespace próprio no backend e pode ser diferente do `
 com ação própria (não espera o resto do formulário); o formato é validado em
 `src/lib/corporate/nametag.ts`, o mesmo do backend. Trocar o nametag muda o endereço público — o
 antigo deixa de responder — sem tocar no perfil social.
+
+Em grupos, o dono pode selecionar um tópico e usar **Renomear tópico** para editar o nome
+pelo diálogo. O formulário aceita até 80 caracteres e usa o PATCH existente, mantendo a descrição,
+a seleção e o conteúdo do tópico. Após salvar, os rótulos do feed são atualizados.

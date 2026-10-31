@@ -8,6 +8,7 @@ import { REACTION_EMOJIS } from "@/constants/reaction-emojis";
 import { texts } from "@/texts";
 import type { GroupMember } from "@/types/application/group/group-member";
 import type { GroupPost } from "@/types/application/group/group-post";
+import type { GroupTopic } from "@/types/application/group/group-topic";
 import type { GroupView } from "@/types/application/group/group-view";
 import type { ReactionType } from "@/types/application/reaction/reaction-type";
 import {
@@ -36,6 +37,7 @@ import {
   Flag,
   Loader2,
   MessageCircle,
+  Pencil,
   Pin,
   PinOff,
   Plus,
@@ -279,6 +281,7 @@ function GroupFeed({ group }: { group: GroupView }) {
   const [content, setContent] = useState("");
   const [newTopicOpen, setNewTopicOpen] = useState(false);
   const [topicName, setTopicName] = useState("");
+  const [editingTopic, setEditingTopic] = useState<GroupTopic | null>(null);
 
   const { data: topicsData } = useQuery({
     queryKey: ["group-topics", group.id],
@@ -338,6 +341,19 @@ function GroupFeed({ group }: { group: GroupView }) {
     onError: () => toast(texts.groups.topicCreateError, "error"),
   });
 
+  const renameTopic = useMutation({
+    mutationFn: () => groupsApi.updateTopic(group.id, editingTopic!.id, { name: topicName.trim() }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["group-topics", group.id] });
+      setNewTopicOpen(false);
+      setEditingTopic(null);
+      setTopicName("");
+      toast(texts.groups.topicRenameSuccess, "success");
+    },
+    onError: (error) => toast(error.message || texts.groups.topicRenameError, "error"),
+  });
+  const topicSaving = createTopic.isPending || renameTopic.isPending;
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -378,11 +394,32 @@ function GroupFeed({ group }: { group: GroupView }) {
             variant="outline"
             size="sm"
             className="w-auto rounded-full gap-1.5"
-            onClick={() => setNewTopicOpen(true)}
+            onClick={() => {
+              setEditingTopic(null);
+              setTopicName("");
+              setNewTopicOpen(true);
+            }}
           >
             <Plus className="h-3.5 w-3.5" />
 
             <>{texts.groups.newTopic}</>
+          </Button>
+        )}
+
+        {group.viewerRole === "OWNER" && activeTopic && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-auto rounded-full gap-1.5"
+            onClick={() => {
+              setEditingTopic(activeTopic);
+              setTopicName(activeTopic.name);
+              setNewTopicOpen(true);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" aria-hidden />
+
+            <>{texts.groups.renameTopic}</>
           </Button>
         )}
       </div>
@@ -453,10 +490,17 @@ function GroupFeed({ group }: { group: GroupView }) {
         </>
       )}
 
-      <Dialog open={newTopicOpen} onOpenChange={setNewTopicOpen}>
+      <Dialog
+        open={newTopicOpen}
+        onOpenChange={(open) => {
+          if (!topicSaving) setNewTopicOpen(open);
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-normal">{texts.groups.newTopic}</DialogTitle>
+            <DialogTitle className="font-normal">
+              {editingTopic ? texts.groups.renameTopic : texts.groups.newTopic}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
@@ -469,15 +513,24 @@ function GroupFeed({ group }: { group: GroupView }) {
                 onChange={(event) => setTopicName(event.target.value)}
                 placeholder={texts.groups.topicNamePlaceholder}
                 maxLength={80}
+                disabled={topicSaving}
               />
             </div>
 
             <Button
               className="w-full rounded-full"
-              disabled={!topicName.trim() || createTopic.isPending}
-              onClick={() => createTopic.mutate()}
+              disabled={
+                !topicName.trim() ||
+                topicSaving ||
+                (editingTopic !== null && topicName.trim() === editingTopic.name)
+              }
+              onClick={() => (editingTopic ? renameTopic.mutate() : createTopic.mutate())}
             >
-              {texts.groups.createAction}
+              {topicSaving
+                ? texts.common.saving
+                : editingTopic
+                  ? texts.common.save
+                  : texts.groups.createAction}
             </Button>
           </div>
         </DialogContent>
