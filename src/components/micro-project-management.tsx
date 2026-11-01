@@ -47,7 +47,7 @@ export function MicroProjectManagement({ company }: { company: CompanyDetail }) 
   const eligible = company.projects.filter(
     (project) => project.status === "OPEN" && project.proposalCount === 0,
   );
-  if (!company.projects.length) return null;
+  if (!eligible.length) return null;
   return (
     <section className="mx-auto mt-6 max-w-5xl space-y-3 rounded-xl border border-border-soft p-4">
       <h2 className="text-lg font-semibold">{copy.title}</h2>
@@ -104,6 +104,7 @@ export function MicroProjectManagement({ company }: { company: CompanyDetail }) 
             </Button>
 
             <Button
+              variant="destructive"
               disabled={remove.isPending}
               onClick={() => removing && remove.mutate(removing.id)}
             >
