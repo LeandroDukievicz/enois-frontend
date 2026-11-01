@@ -174,6 +174,22 @@ describe("comentários de publicação em grupo", () => {
     ).toBeNull();
   });
 
+  it("salvar sem mudar o texto fecha o editor sem chamar a API", async () => {
+    await render(false);
+
+    await act(async () => editButtons()[0]?.click());
+    const save = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
+      (item) => item.textContent === texts.common.save,
+    );
+    await act(async () => save?.click());
+    await settle();
+
+    expect(mocks.editComment).not.toHaveBeenCalled();
+    expect(
+      host.querySelector(`textarea[aria-label='${texts.groups.editCommentLabel}']`),
+    ).toBeNull();
+  });
+
   it("cancela a edição sem chamar a API", async () => {
     await render(false);
 

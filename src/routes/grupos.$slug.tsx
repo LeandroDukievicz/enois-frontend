@@ -813,7 +813,11 @@ export function GroupPostItem({
                           <Button
                             className="w-auto rounded-full"
                             disabled={!editDraft.trim() || editComment.isPending}
-                            onClick={() => editComment.mutate(item.id)}
+                            onClick={() => {
+                              // Sem mudança nenhuma não há o que gravar nem auditar.
+                              if (editDraft.trim() === item.content) setEditingId(null);
+                              else editComment.mutate(item.id);
+                            }}
                           >
                             {editComment.isPending ? texts.common.saving : texts.common.save}
                           </Button>
