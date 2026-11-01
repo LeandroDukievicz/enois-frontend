@@ -212,6 +212,11 @@ export const texts = {
     removePostTitle: "Remover publicação?",
     removePostDescription: "Ela some do feed do grupo; a ação fica registrada na auditoria.",
     removePostError: "Não foi possível remover a publicação.",
+    editCommentLabel: "Editar comentário",
+    editCommentError: "Não foi possível editar o comentário.",
+    removeCommentTitle: "Remover comentário?",
+    removeCommentDescription: "Ele some da publicação; a ação fica registrada na auditoria.",
+    removeCommentError: "Não foi possível remover o comentário.",
   },
 
   appearance: {
